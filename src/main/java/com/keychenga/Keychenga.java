@@ -20,11 +20,10 @@ public class Keychenga extends JFrame {
     public Keychenga() {
         pack();
         setSize(600, 100);
-        setLocation(1500, 500);
+        setLocation(1600, 800);
 
 
-//        Font font = Font.getFont(Font.MONOSPACED);
-        Font font = Font.getFont("Courier");
+        Font font = new Font(Font.MONOSPACED, Font.BOLD, 20);
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         this.getContentPane().add(panel);
@@ -34,7 +33,11 @@ public class Keychenga extends JFrame {
         JLabel answerLabel = new JLabel();
         answerLabel.setFont(font);
         panel.add(answerLabel, BorderLayout.CENTER);
-//        JTextArea text = new JTextArea();
+        JLabel aimLabel = new JLabel();
+        aimLabel.setFont(font);
+        panel.add(aimLabel, BorderLayout.SOUTH);
+
+        //        JTextArea text = new JTextArea();
 //        panel.add(text);
 
         try {
@@ -85,6 +88,7 @@ public class Keychenga extends JFrame {
                         }
                         Collections.shuffle(words);
 
+                        List<String> punishments = new LinkedList<>();
                         StringBuilder questionBuilder = new StringBuilder();
                         System.out.println("-");
 //                        System.out.print("Q: ");
@@ -94,47 +98,63 @@ public class Keychenga extends JFrame {
 //                            System.out.print(word);
 //                            System.out.print(" ");
 
-                            if (questionBuilder.length() >= 10 || i >= words.size() - 1) {
+                            System.out.println("i=" + i);
+                            if (questionBuilder.length() >= 50 || i >= words.size() - 1) {
+//                            if (questionBuilder.length() >= 10 || i >= words.size() - 1) {
                                 StringBuilder answerBuilder = new StringBuilder();
+                                StringBuilder aimBuilder = new StringBuilder();
                                 String question = questionBuilder.toString();
                                 System.out.println("Q: " + question);
+                                System.out.println("question=" + question);
                                 SwingUtilities.invokeAndWait(() -> {
                                     questionLabel.setText(question);
                                     answerLabel.setText("");
+                                    aimLabel.setText("^");
                                 });
                                 questionBuilder = new StringBuilder();
                                 System.out.println();
-                                System.out.print("A: ");
-                                char[] expected = (question + " ").toCharArray();
+                                char[] expected = question.toCharArray();
                                 for (char expectedChar : expected) {
                                     boolean correct = false;
                                     while (!correct) {
                                         Character readChar = inputQueue.poll(5, TimeUnit.MINUTES);
-                                        System.out.print(readChar);
+                                        System.out.println("c=" + readChar);
                                         if (readChar == null) {
                                             System.out.println("Timed out, quitting");
                                             System.exit(0);
                                         } else {
                                             if (expectedChar == readChar) {
+                                                aimBuilder.append(" ");
                                                 correct = true;
                                                 answerBuilder.append(readChar);
                                                 SwingUtilities.invokeLater(() -> {
                                                     answerLabel.setForeground(Color.BLACK);
                                                     answerLabel.setText(answerBuilder.toString());
+                                                    aimLabel.setText(aimBuilder + "^");
                                                 });
                                             } else {
+                                                if (expectedChar != ' ') {
+                                                    punishments.add(String.valueOf(expectedChar));
+                                                }
+                                                System.out.println("p=" + punishments);
+                                                System.out.println("w=" + words);
                                                 SwingUtilities.invokeLater(() -> {
                                                     answerLabel.setForeground(Color.RED);
                                                     answerLabel.setText(answerBuilder.toString() + readChar);
                                                 });
+
                                             }
                                         }
                                     }
                                 }
+                                System.out.println("punishments=" + punishments);
+                                Collections.shuffle(punishments);
+                                words.addAll(i + 1, punishments);
+                                System.out.println("words=" + words);
+                                punishments.clear();
                                 System.out.println("-");
                             }
                         }
-
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
