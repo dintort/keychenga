@@ -1,0 +1,55 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Intellij
+*.iml
+*.iws
+.idea/*.*
+.idea/copyright
+.idea/inspectionProfiles
+.idea/libraries
+.idea/modules
+.idea/scopes
+.idea/shelf
+.idea/dataSources
+.idea/artifacts
+.idea/codeStyles
+.idea/caches
+
+# Compiled class file
+*.class
+out
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+!lib/*.jar
+!lib/jogamp/*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.nar
+*.ear
+*.zip
+!src/main/resources/video/*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+# Android
+local.properties
+
+
+.DS_Store
