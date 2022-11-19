@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 
 public class Keychenga extends JFrame {
 
-    public static final int QUESTION_LENGTH_LIMIT = 150;
+    public static final int QUESTION_LENGTH_LIMIT = 100;
     private final BlockingQueue<Character> inputQueue = new LinkedBlockingQueue<>();
     private final JLabel questionLabel;
     private final JLabel answerLabel;
@@ -184,9 +184,11 @@ public class Keychenga extends JFrame {
                             });
                         } else {
                             if (expectedChar != ' ' && answerChar != ' ') {
-                                penalties.add(expectedLine);
-                                if (expectedLine.length() <= 2) {
+                                if (!penalties.contains(expectedLine)) {
                                     penalties.add(expectedLine);
+                                    if (expectedLine.length() <= 2) {
+                                        penalties.add(expectedLine);
+                                    }
                                 }
                             }
                             System.out.println("p=" + penalties);
