@@ -18,13 +18,14 @@ import javax.swing.SwingUtilities
 import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 100
+
 fun main() {
     Keychenga().isVisible = true
 }
 
 class Keychenga : JFrame("Keychenga") {
 
-    private val inputQueue: BlockingQueue<Char> = LinkedBlockingQueue()
+    private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
     private val questionLabel: JLabel
     private val answerLabel: JLabel
     private val aimLabel: JLabel
@@ -49,34 +50,23 @@ class Keychenga : JFrame("Keychenga") {
         panel.add(aimLabel, BorderLayout.SOUTH)
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
+//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
         setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
         try {
             val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
             manager.addKeyEventPostProcessor { event: KeyEvent ->
-                if (event.id == KeyEvent.KEY_TYPED) {
-                    var keyChar = event.keyChar
-                    if (keyChar == '\n') {
-                        keyChar = ' '
-                    }
-                    inputQueue.clear()
-                    inputQueue.add(keyChar)
+                if (event.id == KeyEvent.KEY_PRESSED) {
+                    inputQueue.add(event)
                 }
                 false
             }
 
-//            List<String> d = loadLines("/d.txt");
-//            List<String> e = loadLines("/e.txt");
-//            BufferedWriter writer = new BufferedWriter(new FileWriter("words.txt"));
-//            for (int i = 0; i < d.size(); i++) {
-//                String dd = d.get(i);
-//                String ee = e.get(i);
-//                writer.write(dd + "=" + ee + "\n");
-//            }
             val symbols = loadLines("/symbols.txt")
             val words = loadLines("/words.txt")
+            val functions = loadLines("/functions.txt")
             Executors.newSingleThreadExecutor().execute {
                 while (!Thread.currentThread().isInterrupted) {
-                    question(symbols, words)
+                    question(symbols, words, functions)
                 }
             }
         } catch (e: Exception) {
@@ -87,8 +77,8 @@ class Keychenga : JFrame("Keychenga") {
     @Throws(IOException::class)
     private fun loadLines(resource: String): MutableList<String?> {
         val symbols: MutableList<String?> = ArrayList()
-        val linesReader = BufferedReader(InputStreamReader(Objects.requireNonNull(
-            this.javaClass.getResourceAsStream(resource))))
+        val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
+        val linesReader = BufferedReader(InputStreamReader(resourceStream))
         var questionLine: String?
         while (linesReader.readLine().also { questionLine = it } != null) {
             symbols.add(questionLine)
@@ -96,10 +86,16 @@ class Keychenga : JFrame("Keychenga") {
         return symbols
     }
 
-    private fun question(symbols: List<String?>, words: MutableList<String?>) {
+    private fun question(
+        symbols: List<String?>,
+        words: MutableList<String?>,
+        functions: MutableList<String?>
+    ) {
         try {
-            val lines: MutableList<String?> = ArrayList(symbols)
             words.shuffle()
+            val lines: MutableList<String?> = ArrayList()
+            lines.addAll(functions)
+            lines.addAll(symbols)
             lines.addAll(words.subList(0, symbols.size / 3))
             lines.shuffle()
             val expectedLines: MutableList<String?> = LinkedList()
@@ -130,8 +126,10 @@ class Keychenga : JFrame("Keychenga") {
                                 penaltyQuestionBuilder.append(penalty).append(" ")
                                 penaltyBatch.add(penalty)
                             }
-                            val morePenalties: MutableList<String?> = answerAndGetPenalties(penaltyBatch,
-                                penaltyQuestionBuilder.toString())
+                            val morePenalties: MutableList<String?> = answerAndGetPenalties(
+                                penaltyBatch,
+                                penaltyQuestionBuilder.toString()
+                            )
                             morePenalties.shuffle()
                             penalties.addAll(morePenalties)
                             penaltyQuestionBuilder = StringBuilder()
@@ -167,27 +165,49 @@ class Keychenga : JFrame("Keychenga") {
         println()
         val penalties: MutableList<String?> = LinkedList()
         for (expectedLine in expectedLines) {
-            val expectedLineWithSpace = "$expectedLine "
-            for (expectedChar in expectedLineWithSpace.toCharArray()) {
-                var correct = false
-                while (!correct) {
-                    val answerChar = inputQueue.poll(5, TimeUnit.MINUTES)
-                    println("c=$answerChar")
-                    if (answerChar == null) {
-                        println("Timed out, quitting")
-                        exitProcess(0)
+            var expectedLineWithSpace = "$expectedLine "
+
+            while (expectedLineWithSpace.isNotEmpty()) {
+                val key = inputQueue.poll(5, TimeUnit.MINUTES)
+                if (key == null) {
+                    println("Timed out, quitting")
+                    exitProcess(0)
+                } else {
+                    println("k=[$key]")
+                    var answer = key.keyChar + ""
+                    if (key.isActionKey
+                        || !key.keyChar.isDefined()
+                        || answer.isEmpty()
+                    ) {
+                        answer = KeyEvent.getKeyText(key.keyCode)
+                    }
+
+                    println("a=[$answer]")
+                    if (key.keyChar == '\n' || key.keyChar == ' ') {
+                        answer = " "
+                    }
+                    if (answer.startsWith("Unknown")
+                        || answer.startsWith("Undefined")
+                    ) {
+                        continue
+                    }
+
+                    println("e=[$expectedLineWithSpace]")
+
+                    if (matches(expectedLineWithSpace, answer)) {
+                        expectedLineWithSpace = expectedLineWithSpace.substring(answer.length)
+                        aimBuilder.append(" ".repeat(answer.length))
+                        answerBuilder.append(answer)
+                        SwingUtilities.invokeLater {
+                            answerLabel.setForeground(Color.BLACK)
+                            answerLabel.setText(answerBuilder.toString())
+                            aimLabel.setText("$aimBuilder^")
+                        }
                     } else {
-                        if (expectedChar == answerChar) {
-                            aimBuilder.append(" ")
-                            correct = true
-                            answerBuilder.append(answerChar)
-                            SwingUtilities.invokeLater {
-                                answerLabel.setForeground(Color.BLACK)
-                                answerLabel.setText(answerBuilder.toString())
-                                aimLabel.setText("$aimBuilder^")
-                            }
-                        } else {
-                            if (expectedChar != ' ' && answerChar != ' ') {
+                        if (key.keyChar.isDefined() || key.isActionKey) {
+                            if (!expectedLineWithSpace.startsWith(" ")
+                                && answer != " "
+                            ) {
                                 if (!penalties.contains(expectedLine)) {
                                     penalties.add(expectedLine)
                                     if (expectedLine!!.length <= 2) {
@@ -198,7 +218,7 @@ class Keychenga : JFrame("Keychenga") {
                             println("p=$penalties")
                             SwingUtilities.invokeLater {
                                 answerLabel.setForeground(Color.RED)
-                                answerLabel.setText(answerBuilder.toString() + answerChar)
+                                answerLabel.setText(answerBuilder.toString() + answer)
                             }
                         }
                     }
@@ -208,6 +228,19 @@ class Keychenga : JFrame("Keychenga") {
         return penalties
     }
 
+    private fun matches(expectedLineWithSpace: String, answer: String): Boolean {
+        // Hack: there should be a better solution for F1 passing for F10-F12
+        if (expectedLineWithSpace.startsWith("F10") && answer != "F10") {
+            return false
+        }
+        if (expectedLineWithSpace.startsWith("F11") && answer != "F11") {
+            return false
+        }
+        if (expectedLineWithSpace.startsWith("F12") && answer != "F12") {
+            return false
+        }
+        return expectedLineWithSpace.startsWith(answer)
+    }
 
 
 }
