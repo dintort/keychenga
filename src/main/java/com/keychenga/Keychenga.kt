@@ -50,12 +50,13 @@ class Keychenga : JFrame("Keychenga") {
         panel.add(aimLabel, BorderLayout.SOUTH)
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
         setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
+//        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
         try {
             val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
             manager.addKeyEventPostProcessor { event: KeyEvent ->
-                if (event.id == KeyEvent.KEY_PRESSED) {
+                if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
                     inputQueue.add(event)
                 }
                 false
@@ -173,15 +174,23 @@ class Keychenga : JFrame("Keychenga") {
                     println("Timed out, quitting")
                     exitProcess(0)
                 } else {
-                    println("k=[$key]")
                     var answer = key.keyChar + ""
-                    if (key.isActionKey
-                        || !key.keyChar.isDefined()
-                        || answer.isEmpty()
+                    if (!key.keyChar.isDefined()
+                        || key.isActionKey
+                        || key.keyCode == KeyEvent.VK_ESCAPE // Somehow Escape is not an action key :O
                     ) {
+                        if (key.id != KeyEvent.KEY_PRESSED) {
+                            continue
+                        }
                         answer = KeyEvent.getKeyText(key.keyCode)
+                    } else {
+                        if (key.id != KeyEvent.KEY_TYPED
+                            || key.keyCode == 0 // Somehow Escape produces a KEY_TYPED event without keyKode :O
+                        ) {
+                            continue
+                        }
                     }
-
+                    println("k=[$key]")
                     println("a=[$answer]")
                     if (key.keyChar == '\n' || key.keyChar == ' ') {
                         answer = " "

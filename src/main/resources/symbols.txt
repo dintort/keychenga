@@ -33,6 +33,9 @@ $
 }
 ^
 ~
+~
+~
+~
 [
 ]
 /
@@ -45,7 +48,7 @@ $
 Ø
 Å
 if (true) {}
-List<String> l = new ArrayList<>();
+List<String> list = new ArrayList<>();
 O_O
 ==
 !=
@@ -57,9 +60,7 @@ O_O
 []
 ();
 Grønjordsvej 10, 2300 København
-skål!
-Lærkehaven
+Tåstrup
+Ålborg
 Værløse
-Rødovre
 Ærøskøbing
-Matthæusgade
