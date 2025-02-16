@@ -29,6 +29,8 @@ _
 *
 @
 $
+$
+$
 {
 }
 ^
@@ -47,20 +49,18 @@ $
 Æ
 Ø
 Å
-if (true) {}
-List<String> list = new ArrayList<>();
 O_O
 ==
 !=
 >=
 <=
-<>
+<> = <>();
 &&
 ||
 []
-();
 Grønjordsvej 10, 2300 København
 Tåstrup
 Ålborg
 Værløse
-Ærøskøbing
+Ærø
+Ølby

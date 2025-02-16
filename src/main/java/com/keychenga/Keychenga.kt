@@ -11,10 +11,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
-import javax.swing.JFrame
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
+import javax.swing.*
 import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 100
@@ -30,34 +27,49 @@ class Keychenga : JFrame("Keychenga") {
     private val answerLabel: JLabel
     private val aimLabel: JLabel
     private val macToPcKeys: Map<String, String> = mapOf(
-        "⌘" to "Windows",
+//        "⌘" to "Windows",
+        "⌘" to "Alt",
+//        "⌥" to "Alt",
+        "⌥" to "Windows",
         "⌃" to "Ctrl",
-        "⌥" to "Alt",
         "⇧" to "Shift",
         "⎋" to "Escape",
     )
 
     init {
         val font = Font(Font.MONOSPACED, Font.BOLD, 20)
-        val panel = JPanel()
-        panel.setLayout(BorderLayout())
-        this.contentPane.add(panel)
+
+        val mainPanel = JPanel()
+        mainPanel.setLayout(BorderLayout())
+        this.contentPane.add(mainPanel)
+
+        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
+        mainPanel.add(pictureLabel, BorderLayout.NORTH)
+
+        val typePanel = JPanel()
+        typePanel.setLayout(BorderLayout())
+        mainPanel.add(typePanel, BorderLayout.CENTER)
+
         val chars = CharArray(QUESTION_LENGTH_LIMIT)
         Arrays.fill(chars, ' ')
         val text = String(chars)
         questionLabel = JLabel(text)
         questionLabel.setFont(font)
-        panel.add(questionLabel, BorderLayout.NORTH)
+        typePanel.add(questionLabel, BorderLayout.NORTH)
+
         answerLabel = JLabel(text)
         answerLabel.setFont(font)
-        panel.add(answerLabel, BorderLayout.CENTER)
+        typePanel.add(answerLabel, BorderLayout.CENTER)
+
         aimLabel = JLabel(text)
         aimLabel.setFont(font)
         aimLabel.setForeground(Color.BLUE)
-        panel.add(aimLabel, BorderLayout.SOUTH)
+        typePanel.add(aimLabel, BorderLayout.SOUTH)
+
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
         setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 4, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
         try {
@@ -95,16 +107,18 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun question(
-        symbols: List<String?>,
+        symbols: MutableList<String?>,
         words: MutableList<String?>,
         functions: MutableList<String?>
     ) {
         try {
             words.shuffle()
+            symbols.shuffle()
+            functions.shuffle()
             val lines: MutableList<String?> = ArrayList()
             lines.addAll(functions)
-            lines.addAll(symbols)
-            lines.addAll(words.subList(0, symbols.size / 3))
+//            lines.addAll(symbols)
+//            lines.addAll(words.subList(0, symbols.size / 3))
             lines.shuffle()
             val expectedLines: MutableList<String?> = LinkedList()
             var questionBuilder = StringBuilder()

@@ -12,11 +12,9 @@ F12
 AltF9
 ShiftF7
 ShiftF8
-CtrlF2
 CtrlF5
 CtrlF9
-CtrlF12
 AltShiftF9
 AltShiftF10
-AltF1 1
+AltF1
 Escape
