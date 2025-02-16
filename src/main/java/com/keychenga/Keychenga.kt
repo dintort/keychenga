@@ -192,7 +192,7 @@ class Keychenga : JFrame("Keychenga") {
                         answer = KeyEvent.getKeyText(key.keyCode)
                     } else {
                         if (key.id != KeyEvent.KEY_TYPED
-                            || key.keyChar == '\u001B' //Escape on Mac ('⎋')
+                            || key.keyChar == '\u001B' //Escape
                         ) {
                             continue
                         }
