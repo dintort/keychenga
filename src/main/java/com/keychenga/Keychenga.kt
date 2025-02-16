@@ -259,5 +259,4 @@ class Keychenga : JFrame("Keychenga") {
         return expectedLineWithSpace.startsWith(answer)
     }
 
-
 }
