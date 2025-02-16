@@ -185,7 +185,7 @@ class Keychenga : JFrame("Keychenga") {
                         answer = KeyEvent.getKeyText(key.keyCode)
                     } else {
                         if (key.id != KeyEvent.KEY_TYPED
-                            || key.keyCode == 0 // Somehow Escape produces a KEY_TYPED event without keyKode :O
+                            || key.toString().contains("Unknown keyCode")
                         ) {
                             continue
                         }
