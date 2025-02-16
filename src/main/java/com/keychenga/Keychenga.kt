@@ -29,6 +29,13 @@ class Keychenga : JFrame("Keychenga") {
     private val questionLabel: JLabel
     private val answerLabel: JLabel
     private val aimLabel: JLabel
+    private val macToPcKeys: Map<String, String> = mapOf(
+        "⌘" to "Windows",
+        "⌃" to "Ctrl",
+        "⌥" to "Alt",
+        "⇧" to "Shift",
+        "⎋" to "Escape",
+    )
 
     init {
         val font = Font(Font.MONOSPACED, Font.BOLD, 20)
@@ -177,7 +184,7 @@ class Keychenga : JFrame("Keychenga") {
                     var answer = key.keyChar + ""
                     if (!key.keyChar.isDefined()
                         || key.isActionKey
-                        || key.keyCode == KeyEvent.VK_ESCAPE // Somehow Escape is not an action key :O
+                        || key.keyCode == KeyEvent.VK_ESCAPE //Somehow Escape is not an action key :O
                     ) {
                         if (key.id != KeyEvent.KEY_PRESSED) {
                             continue
@@ -185,13 +192,14 @@ class Keychenga : JFrame("Keychenga") {
                         answer = KeyEvent.getKeyText(key.keyCode)
                     } else {
                         if (key.id != KeyEvent.KEY_TYPED
-                            || key.toString().contains("Unknown keyCode")
+                            || key.keyChar == '\u001B' //Escape on Mac ('⎋')
                         ) {
                             continue
                         }
                     }
                     println("k=[$key]")
                     println("a=[$answer]")
+                    answer = macToPcKeys[answer] ?: answer
                     if (key.keyChar == '\n' || key.keyChar == ' ') {
                         answer = " "
                     }
