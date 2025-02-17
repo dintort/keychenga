@@ -144,7 +144,7 @@ class Keychenga : JFrame("Keychenga") {
         answer(expectedLines, questionBuilder.toString(), isPenalty)
     }
 
-    private fun answer(expectedLines: List<String?>, question: String, isPenalty: Boolean): MutableList<String?> {
+    private fun answer(expectedLines: List<String?>, question: String, isPenalty: Boolean) {
         val color = if (isPenalty) Color.RED else Color.BLACK
         questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
@@ -206,7 +206,6 @@ class Keychenga : JFrame("Keychenga") {
             penalties.shuffle()
             doQuestion(penalties, true)
         }
-        return penalties;
     }
 
     private fun checkAnswer(
