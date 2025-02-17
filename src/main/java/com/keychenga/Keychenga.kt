@@ -5,7 +5,6 @@ import java.awt.event.KeyEvent
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
-import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
@@ -120,61 +119,38 @@ class Keychenga : JFrame("Keychenga") {
 //            lines.addAll(symbols)
 //            lines.addAll(words.subList(0, symbols.size / 3))
             lines.shuffle()
-            val expectedLines: MutableList<String?> = LinkedList()
-            var questionBuilder = StringBuilder()
-            println("-")
-            for (i in lines.indices) {
-                val line = lines[i]
-                println("i=$i")
-                if (questionBuilder.length + line!!.length >= QUESTION_LENGTH_LIMIT || i >= lines.size - 1) {
-                    val penalties = answerAndGetPenalties(expectedLines, questionBuilder.toString())
-                    questionBuilder = StringBuilder()
-                    println("expectedLines=$expectedLines")
-                    expectedLines.clear()
-                    println("-")
-                    penalties.shuffle()
-                    questionLabel.setForeground(Color.RED)
-                    var penaltyQuestionBuilder = StringBuilder()
-                    val penaltyBatch: MutableList<String?> = LinkedList()
-                    for (j in penalties.indices) {
-                        println("j=$j")
-                        println("penalties=$penalties")
-                        println("penaltyQuestionBuilder=$penaltyQuestionBuilder")
-                        val penalty = penalties[j]
-                        var appended = false
-                        if (penaltyQuestionBuilder.length + penalty!!.length >= QUESTION_LENGTH_LIMIT
-                            || j >= penalties.size - 1) {
-                            if (j >= penalties.size - 1) {
-                                appended = true
-                                penaltyQuestionBuilder.append(penalty).append(" ")
-                                penaltyBatch.add(penalty)
-                            }
-                            val morePenalties: MutableList<String?> = answerAndGetPenalties(
-                                penaltyBatch,
-                                penaltyQuestionBuilder.toString()
-                            )
-                            morePenalties.shuffle()
-                            penalties.addAll(morePenalties)
-                            penaltyQuestionBuilder = StringBuilder()
-                            penaltyBatch.clear()
-                        }
-                        if (!appended) {
-                            penaltyQuestionBuilder.append(penalty).append(" ")
-                            penaltyBatch.add(penalty)
-                        }
-                    }
-                    questionLabel.setForeground(Color.BLACK)
-                    println("words=$lines")
-                }
-                questionBuilder.append(line).append(" ")
-                expectedLines.add(line)
-            }
+            doQuestion(lines, false)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    @Throws(InterruptedException::class, InvocationTargetException::class)
+    private fun doQuestion(lines: MutableList<String?>, isPenalty: Boolean) {;
+        val color = if (isPenalty) Color.RED else Color.BLACK
+        questionLabel.setForeground(color)
+        val expectedLines: MutableList<String?> = LinkedList()
+        var questionBuilder = StringBuilder()
+        println("-")
+        for (i in lines.indices) {
+            val line = lines[i]
+            println("i=$i")
+            if (questionBuilder.length + line!!.length >= QUESTION_LENGTH_LIMIT || i >= lines.size - 1) {
+                val penalties = answerAndGetPenalties(expectedLines, questionBuilder.toString())
+                if (penalties.isNotEmpty()) {
+                    penalties.shuffle()
+                    doQuestion(penalties, true)
+                }
+                questionBuilder = StringBuilder()
+                println("expectedLines=$expectedLines")
+                expectedLines.clear()
+                println("-")
+                println("words=$lines")
+            }
+            questionBuilder.append(line).append(" ")
+            expectedLines.add(line)
+        }
+    }
+
     private fun answerAndGetPenalties(expectedLines: List<String?>, question: String): MutableList<String?> {
         val answerBuilder = StringBuilder()
         val aimBuilder = StringBuilder()
