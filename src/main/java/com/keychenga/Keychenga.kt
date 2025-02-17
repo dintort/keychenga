@@ -11,7 +11,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import javax.swing.*
-import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 75
 
@@ -68,7 +67,7 @@ class Keychenga : JFrame("Keychenga") {
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 4, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
         try {
@@ -164,45 +163,47 @@ class Keychenga : JFrame("Keychenga") {
             while (expectedLineWithSpace.isNotEmpty()) {
                 val key = inputQueue.poll(5, TimeUnit.MINUTES)
                 if (key == null) {
-                    println("Timed out, quitting")
-                    exitProcess(0)
+                    println("Waiting for input...")
+                    continue
+                }
+                var answer = key.keyChar + ""
+                if (!key.keyChar.isDefined()
+                    || key.isActionKey
+                    || key.keyCode == KeyEvent.VK_ESCAPE //Somehow Escape is not an action key :O
+                ) {
+                    if (key.id != KeyEvent.KEY_PRESSED) {
+                        continue
+                    }
+                    answer = KeyEvent.getKeyText(key.keyCode)
                 } else {
-                    var answer = key.keyChar + ""
-                    if (!key.keyChar.isDefined()
-                        || key.isActionKey
-                        || key.keyCode == KeyEvent.VK_ESCAPE //Somehow Escape is not an action key :O
-                    ) {
-                        if (key.id != KeyEvent.KEY_PRESSED) {
-                            continue
-                        }
-                        answer = KeyEvent.getKeyText(key.keyCode)
-                    } else {
-                        if (key.id != KeyEvent.KEY_TYPED
-                            || key.keyChar == '\u001B' //Escape
-                        ) {
-                            continue
-                        }
-                    }
-                    println("k=[$key]")
-                    println("a=[$answer]")
-                    answer = macToPcKeys[answer] ?: answer
-                    if (key.keyChar == '\n' || key.keyChar == ' ') {
-                        answer = " "
-                    }
-                    if (answer.startsWith("Unknown")
-                        || answer.startsWith("Undefined")
+                    if (key.id != KeyEvent.KEY_TYPED
+                        || key.keyChar == '\u001B' //Escape
                     ) {
                         continue
                     }
-
-                    println("e=[$expectedLineWithSpace]")
-                    expectedLineWithSpace = checkAnswer(expectedLineWithSpace, answer, aimBuilder, answerBuilder, key,
-                        penalties, expectedLine)
-                    println("p=$penalties")
                 }
+                println("k=[$key]")
+                println("a=[$answer]")
+                answer = macToPcKeys[answer] ?: answer
+                if (key.keyChar == '\n' || key.keyChar == ' ') {
+                    answer = " "
+                }
+                if (answer.startsWith("Unknown")
+                    || answer.startsWith("Undefined")
+                ) {
+                    continue
+                }
+
+                println("e=[$expectedLineWithSpace]")
+                expectedLineWithSpace = checkAnswer(
+                    expectedLineWithSpace, answer, aimBuilder, answerBuilder, key,
+                    penalties, expectedLine
+                )
+                println("p=$penalties")
             }
         }
         if (penalties.isNotEmpty()) {
+            penalties.addAll(expectedLines)
             penalties.shuffle()
             doQuestion(penalties, true)
         }
@@ -233,7 +234,7 @@ class Keychenga : JFrame("Keychenga") {
                     && answer != " "
                 ) {
                     if (!penalties.contains(expectedLine)) {
-                        repeat(3) { penalties.add(expectedLine) }
+                        repeat(5) { penalties.add(expectedLine) }
                     }
                 }
                 SwingUtilities.invokeLater {
