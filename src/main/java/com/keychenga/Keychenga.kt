@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 import javax.swing.*
 import kotlin.system.exitProcess
 
-const val QUESTION_LENGTH_LIMIT = 100
+const val QUESTION_LENGTH_LIMIT = 75
 
 fun main() {
     Keychenga().isVisible = true
@@ -126,32 +126,27 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun doQuestion(lines: MutableList<String?>, isPenalty: Boolean) {
-        val color = if (isPenalty) Color.RED else Color.BLACK
-        questionLabel.setForeground(color)
+        println("-")
+        println("lines=$lines")
         val expectedLines: MutableList<String?> = LinkedList()
         var questionBuilder = StringBuilder()
-        println("-")
-        for (i in lines.indices) {
-            val line = lines[i]
-            println("i=$i")
-            if (questionBuilder.length + line!!.length >= QUESTION_LENGTH_LIMIT || i >= lines.size - 1) {
-                val penalties = answerAndGetPenalties(expectedLines, questionBuilder.toString())
-                if (penalties.isNotEmpty()) {
-                    penalties.shuffle()
-                    doQuestion(penalties, true)
-                }
-                questionBuilder = StringBuilder()
+        for (line in lines) {
+            if (questionBuilder.length + line!!.length >= QUESTION_LENGTH_LIMIT) {
                 println("expectedLines=$expectedLines")
+                answer(expectedLines, questionBuilder.toString(), isPenalty)
+                questionBuilder = StringBuilder()
                 expectedLines.clear()
                 println("-")
-                println("words=$lines")
             }
             questionBuilder.append(line).append(" ")
             expectedLines.add(line)
         }
+        answer(expectedLines, questionBuilder.toString(), isPenalty)
     }
 
-    private fun answerAndGetPenalties(expectedLines: List<String?>, question: String): MutableList<String?> {
+    private fun answer(expectedLines: List<String?>, question: String, isPenalty: Boolean): MutableList<String?> {
+        val color = if (isPenalty) Color.RED else Color.BLACK
+        questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
         val aimBuilder = StringBuilder()
         println("question=$question")
@@ -201,43 +196,54 @@ class Keychenga : JFrame("Keychenga") {
                     }
 
                     println("e=[$expectedLineWithSpace]")
-
-                    if (matches(expectedLineWithSpace, answer)) {
-                        expectedLineWithSpace = expectedLineWithSpace.substring(answer.length)
-                        aimBuilder.append(" ".repeat(answer.length))
-                        answerBuilder.append(answer)
-                        SwingUtilities.invokeLater {
-                            answerLabel.setForeground(Color.BLACK)
-                            answerLabel.setText(answerBuilder.toString())
-                            aimLabel.setText("$aimBuilder^")
-                        }
-                    } else {
-                        if (key.keyChar.isDefined() || key.isActionKey) {
-                            if (!expectedLineWithSpace.startsWith(" ")
-                                && answer != " "
-                            ) {
-                                if (!penalties.contains(expectedLine)) {
-                                    penalties.add(expectedLine)
-                                    penalties.add(expectedLine)
-                                    penalties.add(expectedLine)
-                                    penalties.add(expectedLine)
-                                    penalties.add(expectedLine)
-//                                    if (expectedLine!!.length <= 2) {
-//                                        penalties.add(expectedLine)
-//                                    }
-                                }
-                            }
-                            println("p=$penalties")
-                            SwingUtilities.invokeLater {
-                                answerLabel.setForeground(Color.RED)
-                                answerLabel.setText(answerBuilder.toString() + answer)
-                            }
-                        }
-                    }
+                    expectedLineWithSpace = checkAnswer(expectedLineWithSpace, answer, aimBuilder, answerBuilder, key,
+                        penalties, expectedLine)
+                    println("p=$penalties")
                 }
             }
         }
-        return penalties
+        if (penalties.isNotEmpty()) {
+            penalties.shuffle()
+            doQuestion(penalties, true)
+        }
+        return penalties;
+    }
+
+    private fun checkAnswer(
+        expectedLineWithSpace: String,
+        answer: String,
+        aimBuilder: StringBuilder,
+        answerBuilder: StringBuilder,
+        key: KeyEvent,
+        penalties: MutableList<String?>,
+        expectedLine: String?
+    ): String {
+        var resultExpectedLineWithSpace = expectedLineWithSpace
+        if (matches(resultExpectedLineWithSpace, answer)) {
+            resultExpectedLineWithSpace = resultExpectedLineWithSpace.substring(answer.length)
+            aimBuilder.append(" ".repeat(answer.length))
+            answerBuilder.append(answer)
+            SwingUtilities.invokeLater {
+                answerLabel.setForeground(Color.BLACK)
+                answerLabel.setText(answerBuilder.toString())
+                aimLabel.setText("$aimBuilder^")
+            }
+        } else {
+            if (key.keyChar.isDefined() || key.isActionKey) {
+                if (!resultExpectedLineWithSpace.startsWith(" ")
+                    && answer != " "
+                ) {
+                    if (!penalties.contains(expectedLine)) {
+                        repeat(3) { penalties.add(expectedLine) }
+                    }
+                }
+                SwingUtilities.invokeLater {
+                    answerLabel.setForeground(Color.RED)
+                    answerLabel.setText(answerBuilder.toString() + answer)
+                }
+            }
+        }
+        return resultExpectedLineWithSpace
     }
 
     private fun matches(expectedLineWithSpace: String, answer: String): Boolean {
