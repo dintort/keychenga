@@ -125,7 +125,7 @@ class Keychenga : JFrame("Keychenga") {
         }
     }
 
-    private fun doQuestion(lines: MutableList<String?>, isPenalty: Boolean) {;
+    private fun doQuestion(lines: MutableList<String?>, isPenalty: Boolean) {
         val color = if (isPenalty) Color.RED else Color.BLACK
         questionLabel.setForeground(color)
         val expectedLines: MutableList<String?> = LinkedList()
