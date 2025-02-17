@@ -68,8 +68,8 @@ class Keychenga : JFrame("Keychenga") {
 
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 4, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 4, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
         try {
@@ -142,7 +142,8 @@ class Keychenga : JFrame("Keychenga") {
                         println("penaltyQuestionBuilder=$penaltyQuestionBuilder")
                         val penalty = penalties[j]
                         var appended = false
-                        if (penaltyQuestionBuilder.length + penalty!!.length >= QUESTION_LENGTH_LIMIT || j >= penalties.size - 1) {
+                        if (penaltyQuestionBuilder.length + penalty!!.length >= QUESTION_LENGTH_LIMIT
+                            || j >= penalties.size - 1) {
                             if (j >= penalties.size - 1) {
                                 appended = true
                                 penaltyQuestionBuilder.append(penalty).append(" ")
@@ -241,9 +242,13 @@ class Keychenga : JFrame("Keychenga") {
                             ) {
                                 if (!penalties.contains(expectedLine)) {
                                     penalties.add(expectedLine)
-                                    if (expectedLine!!.length <= 2) {
-                                        penalties.add(expectedLine)
-                                    }
+                                    penalties.add(expectedLine)
+                                    penalties.add(expectedLine)
+                                    penalties.add(expectedLine)
+                                    penalties.add(expectedLine)
+//                                    if (expectedLine!!.length <= 2) {
+//                                        penalties.add(expectedLine)
+//                                    }
                                 }
                             }
                             println("p=$penalties")
