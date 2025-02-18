@@ -1,0 +1,9 @@
+AltF9
+ShiftF7
+ShiftF8
+CtrlF5
+CtrlF9
+CtrlF12
+AltShiftF9
+AltShiftF10
+AltF1

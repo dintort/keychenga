@@ -79,12 +79,19 @@ class Keychenga : JFrame("Keychenga") {
                 false
             }
 
-            val symbols = loadLines("/symbols.txt")
-            val words = loadLines("/words.txt")
-            val functions = loadLines("/functions.txt")
             Executors.newSingleThreadExecutor().execute {
                 while (!Thread.currentThread().isInterrupted) {
-                    question(symbols, words, functions)
+                    try {
+                        val lines: MutableList<String?> = ArrayList()
+                        lines.addAll(loadLines("/functions.txt"))
+//                        lines.addAll(loadLines("/functions-modifiers.txt"))
+//                        lines.addAll(loadLines("/symbols.txt"))
+//                        lines.addAll(loadLines("/words.txt").subList(0, 30))
+                        lines.shuffle()
+                        question(lines, false)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -93,38 +100,19 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     @Throws(IOException::class)
-    private fun loadLines(resource: String): MutableList<String?> {
-        val symbols: MutableList<String?> = ArrayList()
+    private fun loadLines(resource: String): List<String?> {
+        val lintes: MutableList<String?> = ArrayList()
         val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
         val linesReader = BufferedReader(InputStreamReader(resourceStream))
         var questionLine: String?
         while (linesReader.readLine().also { questionLine = it } != null) {
-            symbols.add(questionLine)
+            lintes.add(questionLine)
         }
-        return symbols
+        lintes.shuffle()
+        return lintes
     }
 
-    private fun question(
-        symbols: MutableList<String?>,
-        words: MutableList<String?>,
-        functions: MutableList<String?>
-    ) {
-        try {
-            words.shuffle()
-            symbols.shuffle()
-            functions.shuffle()
-            val lines: MutableList<String?> = ArrayList()
-            lines.addAll(functions)
-//            lines.addAll(symbols)
-//            lines.addAll(words.subList(0, symbols.size / 3))
-            lines.shuffle()
-            doQuestion(lines, false)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun doQuestion(lines: MutableList<String?>, isPenalty: Boolean) {
+    private fun question(lines: MutableList<String?>, isPenalty: Boolean) {
         println("-")
         println("lines=$lines")
         val expectedLines: MutableList<String?> = LinkedList()
@@ -156,7 +144,7 @@ class Keychenga : JFrame("Keychenga") {
             aimLabel.setText("^")
         }
         println()
-        val penalties: MutableList<String?> = LinkedList()
+        val penalties: MutableList<String?> = ArrayList()
         for (expectedLine in expectedLines) {
             var expectedLineWithSpace = "$expectedLine "
 
@@ -196,8 +184,13 @@ class Keychenga : JFrame("Keychenga") {
 
                 println("e=[$expectedLineWithSpace]")
                 expectedLineWithSpace = checkAnswer(
-                    expectedLineWithSpace, answer, aimBuilder, answerBuilder, key,
-                    penalties, expectedLine
+                    expectedLineWithSpace,
+                    answer,
+                    aimBuilder,
+                    answerBuilder,
+                    key,
+                    penalties,
+                    expectedLine
                 )
                 println("p=$penalties")
             }
@@ -205,7 +198,7 @@ class Keychenga : JFrame("Keychenga") {
         if (penalties.isNotEmpty()) {
             penalties.addAll(expectedLines)
             penalties.shuffle()
-            doQuestion(penalties, true)
+            question(penalties, true)
         }
     }
 
@@ -230,12 +223,8 @@ class Keychenga : JFrame("Keychenga") {
             }
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
-                if (!resultExpectedLineWithSpace.startsWith(" ")
-                    && answer != " "
-                ) {
-                    if (!penalties.contains(expectedLine)) {
-                        repeat(5) { penalties.add(expectedLine) }
-                    }
+                if (answer != " " && !resultExpectedLineWithSpace.startsWith(" ")) {
+                    repeat(5) { penalties.add(expectedLine) }
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
