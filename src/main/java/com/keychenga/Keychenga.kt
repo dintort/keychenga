@@ -3,7 +3,6 @@ package com.keychenga
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
 import java.util.*
 import java.util.concurrent.BlockingQueue
@@ -35,6 +34,7 @@ class Keychenga : JFrame("Keychenga") {
     )
 
     init {
+        defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
         val font = Font(Font.MONOSPACED, Font.BOLD, 20)
 
         val mainPanel = JPanel()
@@ -99,7 +99,7 @@ class Keychenga : JFrame("Keychenga") {
         }
     }
 
-    @Throws(IOException::class)
+    @Suppress("SameParameterValue")
     private fun loadLines(resource: String): List<String?> {
         val lintes: MutableList<String?> = ArrayList()
         val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
