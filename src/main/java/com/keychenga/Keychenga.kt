@@ -101,15 +101,15 @@ class Keychenga : JFrame("Keychenga") {
 
     @Suppress("SameParameterValue")
     private fun loadLines(resource: String): List<String?> {
-        val lintes: MutableList<String?> = ArrayList()
+        val lines: MutableList<String?> = ArrayList()
         val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
         val linesReader = BufferedReader(InputStreamReader(resourceStream))
         var questionLine: String?
         while (linesReader.readLine().also { questionLine = it } != null) {
-            lintes.add(questionLine)
+            lines.add(questionLine)
         }
-        lintes.shuffle()
-        return lintes
+        lines.shuffle()
+        return lines
     }
 
     private fun question(lines: MutableList<String?>, isPenalty: Boolean) {
