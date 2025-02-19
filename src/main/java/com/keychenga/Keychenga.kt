@@ -51,8 +51,8 @@ class Keychenga : JFrame("Keychenga") {
         mainPanel.setLayout(BorderLayout())
         this.contentPane.add(mainPanel)
 
-        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
-        mainPanel.add(pictureLabel, BorderLayout.NORTH)
+//        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
+//        mainPanel.add(pictureLabel, BorderLayout.NORTH)
 
         val typePanel = JPanel()
         typePanel.setLayout(BorderLayout())
@@ -91,31 +91,35 @@ class Keychenga : JFrame("Keychenga") {
 
             Executors.newSingleThreadExecutor().execute {
                 while (!Thread.currentThread().isInterrupted) {
-                    try {
-                        val lines: MutableList<String?> = ArrayList()
-                        lines.addAll(loadLines("/functions.txt"))
-                        if (System.getProperty("os.name").lowercase().contains("windows")) {
-                            // F10 triggers window menu on Windows :(
-                            lines.addAll(loadLines("/f9.txt"))
-                        } else {
-                            lines.addAll(loadLines("/f9f10.txt"))
-                        }
-//                        lines.addAll(loadLines("/functions-modifiers.txt"))
-//                        lines.addAll(loadLines("/symbols.txt"))
-//                        lines.addAll(loadLines("/words.txt").subList(0, 30))
-                        println("-")
-                        val subGlobalPenalties = globalPenalties.shuffled()
-                            .subList(0, min(256, globalPenalties.size))
-                        println("subGlobalPenalties=$subGlobalPenalties")
-                        lines.addAll(subGlobalPenalties)
-                        lines.shuffle()
-                        println("lines=$lines")
-                        question(lines, false)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    play()
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun play() {
+        try {
+            val lines: MutableList<String?> = ArrayList()
+            lines.addAll(loadLines("/functions.txt"))
+            if (System.getProperty("os.name").lowercase().contains("windows")) {
+                // F10 triggers window menu on Windows :(
+                lines.addAll(loadLines("/f9.txt"))
+            } else {
+                lines.addAll(loadLines("/f9f10.txt"))
+            }
+//            lines.addAll(loadLines("/functions-modifiers.txt"))
+//            lines.addAll(loadLines("/symbols.txt"))
+//            lines.addAll(loadLines("/words.txt").subList(0, 30))
+            println("-")
+            val subGlobalPenalties = globalPenalties.shuffled()
+                .subList(0, min(256, globalPenalties.size))
+            println("subGlobalPenalties=$subGlobalPenalties")
+            repeat(5) { lines.addAll(subGlobalPenalties) }
+            lines.shuffle()
+            println("lines=$lines")
+            question(lines)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -126,34 +130,30 @@ class Keychenga : JFrame("Keychenga") {
         val lines: MutableList<String?> = ArrayList()
         val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
         val linesReader = BufferedReader(InputStreamReader(resourceStream))
-        var questionLine: String?
-        while (linesReader.readLine().also { questionLine = it } != null) {
-            lines.add(questionLine)
-        }
+        linesReader.forEachLine { lines.add(it) }
         lines.shuffle()
         return lines
     }
 
-    private fun question(lines: MutableList<String?>, isPenalty: Boolean) {
+    private fun question(lines: MutableList<String?>) {
         val expectedLines: MutableList<String?> = LinkedList()
-        var questionBuilder = StringBuilder(" ")
+        val questionBuilder = StringBuilder(" ")
         for (line in lines) {
             if (questionBuilder.length + line!!.length >= QUESTION_LENGTH_LIMIT) {
                 println("expectedLines=$expectedLines")
-                answer(expectedLines, questionBuilder.toString(), isPenalty)
-                questionBuilder = StringBuilder(" ")
+                answer(expectedLines, questionBuilder.toString())
+                questionBuilder.clear().append(" ")
                 expectedLines.clear()
                 println("-")
             }
             questionBuilder.append(line).append(" ")
             expectedLines.add(line)
         }
-        answer(expectedLines, questionBuilder.toString(), isPenalty)
+        answer(expectedLines, questionBuilder.toString())
     }
 
-    private fun answer(expectedLines: List<String?>, question: String, isPenalty: Boolean) {
-        val color = if (isPenalty) Color.RED else Color.BLACK
-//        val color = Color.BLACK
+    private fun answer(expectedLines: List<String?>, question: String) {
+        val color = Color.BLACK
         questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
         val aimBuilder = StringBuilder()
@@ -219,7 +219,7 @@ class Keychenga : JFrame("Keychenga") {
         if (penalties.isNotEmpty()) {
             penalties.addAll(expectedLines)
             penalties.shuffle()
-            question(penalties, true) // This is an unbound recursion so  theoretically it might cause a stack overflow if the user is persistent enough.
+            question(penalties) // This is an unbound recursion so  theoretically it might cause a stack overflow if the user is persistent enough.
         }
     }
 
