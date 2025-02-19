@@ -10,28 +10,38 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import javax.swing.*
+import kotlin.math.min
 
 const val QUESTION_LENGTH_LIMIT = 75
+private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
+//        "⌘" to "Windows",
+    "⌘" to "Alt",
+//        "⌥" to "Alt",
+    "⌥" to "Windows",
+    "⌃" to "Ctrl",
+    "⇧" to "Shift",
+    "⎋" to "Escape",
+)
 
 fun main() {
     Keychenga().isVisible = true
 }
 
 class Keychenga : JFrame("Keychenga") {
-
-    private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
     private val questionLabel: JLabel
     private val answerLabel: JLabel
     private val aimLabel: JLabel
-    private val macToPcKeys: Map<String, String> = mapOf(
-//        "⌘" to "Windows",
-        "⌘" to "Alt",
-//        "⌥" to "Alt",
-        "⌥" to "Windows",
-        "⌃" to "Ctrl",
-        "⇧" to "Shift",
-        "⎋" to "Escape",
-    )
+
+    private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
+    private val globalPenalties = object : LinkedHashSet<String?>(8192) {
+        override fun add(element: String?): Boolean {
+            if (size >= 8192 && !contains(element)) {
+                remove(first())
+            }
+            return super.add(element)
+        }
+    }
+
 
     init {
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
@@ -84,10 +94,22 @@ class Keychenga : JFrame("Keychenga") {
                     try {
                         val lines: MutableList<String?> = ArrayList()
                         lines.addAll(loadLines("/functions.txt"))
+                        if (System.getProperty("os.name").lowercase().contains("windows")) {
+                            // F10 triggers window menu on Windows :(
+                            lines.addAll(loadLines("/f9.txt"))
+                        } else {
+                            lines.addAll(loadLines("/f9f10.txt"))
+                        }
 //                        lines.addAll(loadLines("/functions-modifiers.txt"))
 //                        lines.addAll(loadLines("/symbols.txt"))
 //                        lines.addAll(loadLines("/words.txt").subList(0, 30))
+                        println("-")
+                        val subGlobalPenalties = globalPenalties.shuffled()
+                            .subList(0, min(256, globalPenalties.size))
+                        println("subGlobalPenalties=$subGlobalPenalties")
+                        lines.addAll(subGlobalPenalties)
                         lines.shuffle()
+                        println("lines=$lines")
                         question(lines, false)
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -113,15 +135,13 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun question(lines: MutableList<String?>, isPenalty: Boolean) {
-        println("-")
-        println("lines=$lines")
         val expectedLines: MutableList<String?> = LinkedList()
-        var questionBuilder = StringBuilder()
+        var questionBuilder = StringBuilder(" ")
         for (line in lines) {
             if (questionBuilder.length + line!!.length >= QUESTION_LENGTH_LIMIT) {
                 println("expectedLines=$expectedLines")
                 answer(expectedLines, questionBuilder.toString(), isPenalty)
-                questionBuilder = StringBuilder()
+                questionBuilder = StringBuilder(" ")
                 expectedLines.clear()
                 println("-")
             }
@@ -133,6 +153,7 @@ class Keychenga : JFrame("Keychenga") {
 
     private fun answer(expectedLines: List<String?>, question: String, isPenalty: Boolean) {
         val color = if (isPenalty) Color.RED else Color.BLACK
+//        val color = Color.BLACK
         questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
         val aimBuilder = StringBuilder()
@@ -146,9 +167,9 @@ class Keychenga : JFrame("Keychenga") {
         println()
         val penalties: MutableList<String?> = ArrayList()
         for (expectedLine in expectedLines) {
-            var expectedLineWithSpace = "$expectedLine "
+            var expectedLineWithLeadingSpace = " $expectedLine"
 
-            while (expectedLineWithSpace.isNotEmpty()) {
+            while (expectedLineWithLeadingSpace.isNotEmpty()) {
                 val key = inputQueue.poll(5, TimeUnit.MINUTES)
                 if (key == null) {
                     println("Waiting for input...")
@@ -172,7 +193,7 @@ class Keychenga : JFrame("Keychenga") {
                 }
                 println("k=[$key]")
                 println("a=[$answer]")
-                answer = macToPcKeys[answer] ?: answer
+                answer = MAC_TO_PC_KEYS[answer] ?: answer
                 if (key.keyChar == '\n' || key.keyChar == ' ') {
                     answer = " "
                 }
@@ -182,9 +203,9 @@ class Keychenga : JFrame("Keychenga") {
                     continue
                 }
 
-                println("e=[$expectedLineWithSpace]")
-                expectedLineWithSpace = checkAnswer(
-                    expectedLineWithSpace,
+                println("e=[$expectedLineWithLeadingSpace]")
+                expectedLineWithLeadingSpace = checkAnswer(
+                    expectedLineWithLeadingSpace,
                     answer,
                     aimBuilder,
                     answerBuilder,
@@ -198,12 +219,12 @@ class Keychenga : JFrame("Keychenga") {
         if (penalties.isNotEmpty()) {
             penalties.addAll(expectedLines)
             penalties.shuffle()
-            question(penalties, true)
+            question(penalties, true) // This is an unbound recursion so  theoretically it might cause a stack overflow if the user is persistent enough.
         }
     }
 
     private fun checkAnswer(
-        expectedLineWithSpace: String,
+        expectedLineWithLeadingSpace: String,
         answer: String,
         aimBuilder: StringBuilder,
         answerBuilder: StringBuilder,
@@ -211,11 +232,17 @@ class Keychenga : JFrame("Keychenga") {
         penalties: MutableList<String?>,
         expectedLine: String?
     ): String {
-        var resultExpectedLineWithSpace = expectedLineWithSpace
-        if (matches(resultExpectedLineWithSpace, answer)) {
-            resultExpectedLineWithSpace = resultExpectedLineWithSpace.substring(answer.length)
-            aimBuilder.append(" ".repeat(answer.length))
-            answerBuilder.append(answer)
+        var varExpectedLineWithLeadingSpace = expectedLineWithLeadingSpace
+        var varAnswer = answer
+        if (varExpectedLineWithLeadingSpace.startsWith(" ")
+            && !varAnswer.equals(" ")
+        ) {
+            varAnswer = " $varAnswer"
+        }
+        if (matches(varExpectedLineWithLeadingSpace, varAnswer)) {
+            varExpectedLineWithLeadingSpace = varExpectedLineWithLeadingSpace.substring(varAnswer.length)
+            aimBuilder.append(" ".repeat(varAnswer.length))
+            answerBuilder.append(varAnswer)
             SwingUtilities.invokeLater {
                 answerLabel.setForeground(Color.BLACK)
                 answerLabel.setText(answerBuilder.toString())
@@ -223,16 +250,21 @@ class Keychenga : JFrame("Keychenga") {
             }
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
-                if (answer != " " && !resultExpectedLineWithSpace.startsWith(" ")) {
-                    repeat(5) { penalties.add(expectedLine) }
+                if (varAnswer != " ") {
+                    if (!penalties.contains(expectedLine)) {
+                        repeat(3) {
+                            penalties.add(expectedLine)
+                        }
+                    }
+                    globalPenalties.add(expectedLine)
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
-                    answerLabel.setText(answerBuilder.toString() + answer)
+                    answerLabel.setText(answerBuilder.toString() + varAnswer)
                 }
             }
         }
-        return resultExpectedLineWithSpace
+        return varExpectedLineWithLeadingSpace
     }
 
     private fun matches(expectedLineWithSpace: String, answer: String): Boolean {
