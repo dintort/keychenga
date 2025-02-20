@@ -1,16 +1,26 @@
 package com.keychenga
 
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Font
+import java.awt.GraphicsEnvironment
+import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.*
+import java.util.Arrays
+import java.util.LinkedList
+import java.util.Objects
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
-import javax.swing.*
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import kotlin.random.Random
+import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 75
 private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
@@ -42,59 +52,6 @@ class Keychenga : JFrame("Keychenga") {
         }
     }
 
-
-    init {
-        defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
-        val font = Font(Font.MONOSPACED, Font.BOLD, 20)
-
-        val mainPanel = JPanel()
-        mainPanel.setLayout(BorderLayout())
-        this.contentPane.add(mainPanel)
-
-//        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
-//        mainPanel.add(pictureLabel, BorderLayout.NORTH)
-
-        val typePanel = JPanel()
-        typePanel.setLayout(BorderLayout())
-        mainPanel.add(typePanel, BorderLayout.CENTER)
-
-        val chars = CharArray(QUESTION_LENGTH_LIMIT)
-        Arrays.fill(chars, ' ')
-        val text = String(chars)
-        questionLabel = JLabel(text)
-        questionLabel.setFont(font)
-        typePanel.add(questionLabel, BorderLayout.NORTH)
-
-        answerLabel = JLabel(text)
-        answerLabel.setFont(font)
-        typePanel.add(answerLabel, BorderLayout.CENTER)
-
-        aimLabel = JLabel(text)
-        aimLabel.setFont(font)
-        aimLabel.setForeground(Color.BLUE)
-        typePanel.add(aimLabel, BorderLayout.SOUTH)
-
-        pack()
-        val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
-//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
-//        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
-        try {
-            val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-            manager.addKeyEventPostProcessor { event: KeyEvent ->
-                if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
-                    inputQueue.add(event)
-                }
-                false
-            }
-
-            Executors.newSingleThreadExecutor().execute { play() }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
     private fun play() {
         while (!Thread.currentThread().isInterrupted) {
             try {
@@ -106,26 +63,19 @@ class Keychenga : JFrame("Keychenga") {
                 } else {
                     lines.addAll(loadLines("/f9f10.txt"))
                 }
-                //            lines.addAll(loadLines("/functions-modifiers.txt"))
-                //            lines.addAll(loadLines("/symbols.txt"))
-                //            lines.addAll(loadLines("/words.txt").subList(0, 30))
+//                lines.addAll(loadLines("/functions-modifiers.txt"))
+//                lines.addAll(loadLines("/numbers.txt"))
+//                lines.addAll(loadLines("/symbols.txt"))
+//                lines.addAll(loadLines("/words.txt").subList(0, 30))
                 println("-")
                 lines.shuffle()
                 println("lines=$lines")
                 question(lines)
             } catch (e: Exception) {
                 e.printStackTrace()
+                exitProcess(1)
             }
         }
-    }
-
-    @Suppress("SameParameterValue")
-    private fun loadLines(resource: String): List<String> {
-        val lines: MutableList<String> = ArrayList()
-        val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
-        val linesReader = BufferedReader(InputStreamReader(resourceStream))
-        linesReader.forEachLine { lines.add(it) }
-        return lines
     }
 
     private fun question(lines: List<String>) {
@@ -221,9 +171,9 @@ class Keychenga : JFrame("Keychenga") {
                     key,
                     questionLine
                 )
+                println("p=$penalties")
             }
         }
-        println("p=$penalties")
     }
 
     private fun checkAnswer(
@@ -237,7 +187,7 @@ class Keychenga : JFrame("Keychenga") {
         var varQuestionLineWithLeadingSpace = questionLineWithLeadingSpace
         var varAnswer = answer
         if (varQuestionLineWithLeadingSpace.startsWith(" ")
-            && !varAnswer.equals(" ")
+            && varAnswer != " "
         ) {
             varAnswer = " $varAnswer"
         }
@@ -253,7 +203,7 @@ class Keychenga : JFrame("Keychenga") {
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
                 if (varAnswer != " ") {
-                    repeat(3) { penalties.add(questionLine) }
+                    repeat(5) { penalties.add(questionLine) }
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
@@ -276,6 +226,65 @@ class Keychenga : JFrame("Keychenga") {
             return false
         }
         return questionLineWithSpace.startsWith(answer)
+    }
+
+    init {
+        defaultCloseOperation = EXIT_ON_CLOSE
+        val font = Font(Font.MONOSPACED, Font.BOLD, 20)
+        val mainPanel = JPanel()
+        mainPanel.setLayout(BorderLayout())
+        contentPane.add(mainPanel)
+        //        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
+        //        mainPanel.add(pictureLabel, BorderLayout.NORTH)
+        val typePanel = JPanel()
+        typePanel.setLayout(BorderLayout())
+        mainPanel.add(typePanel, BorderLayout.CENTER)
+        val chars = CharArray(QUESTION_LENGTH_LIMIT)
+        Arrays.fill(chars, ' ')
+        val text = String(chars)
+        questionLabel = JLabel(text)
+        questionLabel.setFont(font)
+        typePanel.add(questionLabel, BorderLayout.NORTH)
+        answerLabel = JLabel(text)
+        answerLabel.setFont(font)
+        typePanel.add(answerLabel, BorderLayout.CENTER)
+        aimLabel = JLabel(text)
+        aimLabel.setFont(font)
+        aimLabel.setForeground(Color.BLUE)
+        typePanel.add(aimLabel, BorderLayout.SOUTH)
+        pack()
+        val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
+        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
+//        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
+
+        initKeyboard()
+        Executors.newSingleThreadExecutor().execute { play() }
+    }
+
+    private fun initKeyboard() {
+        try {
+            val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+            manager.addKeyEventPostProcessor { event: KeyEvent ->
+                if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
+                    inputQueue.add(event)
+                }
+                false
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    @Suppress("SameParameterValue")
+    private fun loadLines(resource: String): List<String> {
+        val lines: MutableList<String> = ArrayList()
+        val resourceStream = Objects.requireNonNull(this.javaClass.getResourceAsStream(resource))
+        val linesReader = BufferedReader(InputStreamReader(resourceStream))
+        linesReader.forEachLine { lines.add(it) }
+        return lines
     }
 
 }
