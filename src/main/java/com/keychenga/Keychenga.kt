@@ -19,6 +19,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.math.min
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -87,7 +88,7 @@ class Keychenga : JFrame("Keychenga") {
             val line = if (penalties.isEmpty() || i++ % 2 == 0) {
                 bucket.removeFirst()
             } else {
-                penalties.removeAt(Random.nextInt(penalties.size))
+                penalties.removeAt(Random.nextInt(min(penalties.size, 16)))
             }
             if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
@@ -105,7 +106,7 @@ class Keychenga : JFrame("Keychenga") {
             line = if (penalties.isEmpty() || i++ % 2 == 0) {
                 lines.random()
             } else {
-                penalties.removeAt(Random.nextInt(penalties.size))
+                penalties.removeAt(Random.nextInt(min(penalties.size, 16)))
             }
         }
         answer(questionLines, questionBuilder.toString())
