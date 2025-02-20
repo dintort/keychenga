@@ -15,11 +15,11 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import kotlin.math.min
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -45,6 +45,14 @@ class Keychenga : JFrame("Keychenga") {
 
     private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
     private val penalties = object : LinkedList<String>() {
+        override fun add(element: String): Boolean {
+            if (size >= 1024 && !contains(element)) {
+                removeFirst()
+            }
+            return super.add(element)
+        }
+    }
+    private val stickyPenalties = object : LinkedHashSet<String>() {
         override fun add(element: String): Boolean {
             if (size >= 1024 && !contains(element)) {
                 removeFirst()
@@ -83,13 +91,9 @@ class Keychenga : JFrame("Keychenga") {
         val bucket = LinkedList(lines)
         val questionLines: MutableList<String> = ArrayList()
         val questionBuilder = StringBuilder(" ")
-        var i = 0
+        val counter = AtomicInteger(0)
         while (bucket.isNotEmpty()) {
-            val line = if (penalties.isEmpty() || i++ % 2 == 0) {
-                bucket.removeFirst()
-            } else {
-                penalties.removeAt(Random.nextInt(min(penalties.size, 16)))
-            }
+            val line = nextLine(counter) { bucket.removeFirst() }
             if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
                 questionBuilder.clear().append(" ")
@@ -99,18 +103,33 @@ class Keychenga : JFrame("Keychenga") {
             questionBuilder.append(line).append(" ")
             questionLines.add(line)
         }
-        var line = lines.random()
+        val nextLineFunction = { lines.random() }
+        var line = nextLineFunction.invoke()
         while (questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT) {
             questionBuilder.append(line).append(" ")
             questionLines.add(line)
-            line = if (penalties.isEmpty() || i++ % 2 == 0) {
-                lines.random()
-            } else {
-                penalties.removeAt(Random.nextInt(min(penalties.size, 16)))
-            }
+            line = nextLine(counter, nextLineFunction)
         }
         answer(questionLines, questionBuilder.toString())
     }
+
+    private fun nextLine(
+        counter: AtomicInteger,
+        nextLineFunction: () -> String
+    ): String =
+        if (penalties.isEmpty() || counter.incrementAndGet() % 2 == 0) {
+            if (stickyPenalties.isEmpty() || Random.nextDouble() > 0.3) {
+                nextLineFunction.invoke()
+            } else {
+                if (penalties.isEmpty()) {
+                    stickyPenalties.random()
+                } else {
+                    nextLineFunction.invoke()
+                }
+            }
+        } else {
+            penalties.removeAt(0)
+        }
 
     private fun answer(questionLines: List<String>, question: String) {
         val color = Color.BLACK
@@ -204,7 +223,8 @@ class Keychenga : JFrame("Keychenga") {
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
                 if (varAnswer != " ") {
-                    repeat(5) { penalties.add(questionLine) }
+                    repeat(16) { penalties.add(questionLine) }
+                    stickyPenalties.add(questionLine)
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
