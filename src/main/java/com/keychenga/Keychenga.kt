@@ -79,6 +79,7 @@ class Keychenga : JFrame("Keychenga") {
                 println("-")
                 lines.shuffle()
                 println("lines=$lines")
+                println("stickyPenalties=$stickyPenalties")
                 question(lines)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -118,14 +119,10 @@ class Keychenga : JFrame("Keychenga") {
         nextLineFunction: () -> String
     ): String =
         if (penalties.isEmpty() || counter.incrementAndGet() % 2 == 0) {
-            if (stickyPenalties.isEmpty() || Random.nextDouble() > 0.3) {
+            if (penalties.isNotEmpty() || stickyPenalties.isEmpty() || Random.nextDouble() > 0.3) {
                 nextLineFunction.invoke()
             } else {
-                if (penalties.isEmpty()) {
-                    stickyPenalties.random()
-                } else {
-                    nextLineFunction.invoke()
-                }
+                stickyPenalties.random()
             }
         } else {
             penalties.removeAt(0)
@@ -236,15 +233,13 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun matches(questionLineWithSpace: String, answer: String): Boolean {
-        // Hack: there should be a better solution for F1 passing for F10-F12
-        if (questionLineWithSpace.startsWith("F10") && answer != "F10") {
-            return false
-        }
-        if (questionLineWithSpace.startsWith("F11") && answer != "F11") {
-            return false
-        }
-        if (questionLineWithSpace.startsWith("F12") && answer != "F12") {
-            return false
+        val trim = answer.trim()
+        if (trim == "F1") { // To avoid F1 passing for F10-F12
+            val split = questionLineWithSpace.trim().split(" ")
+            if (split.isEmpty()) {
+                return false
+            }
+            return split[0] == trim
         }
         return questionLineWithSpace.startsWith(answer)
     }
