@@ -33,13 +33,6 @@ $
 /
 \
 |
-æ
-ø
-å
-Æ
-Ø
-Å
-O_O
 ==
 !=
 >=
@@ -48,9 +41,3 @@ O_O
 &&
 ||
 []
-Grønjordsvej 10, 2300 København
-Tåstrup
-Ålborg
-Værløse
-Ærø
-Ølby

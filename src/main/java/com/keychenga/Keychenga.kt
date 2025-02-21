@@ -1,5 +1,6 @@
 package com.keychenga
 
+import com.keychenga.util.LimitedArrayList
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Font
@@ -15,7 +16,6 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -44,42 +44,27 @@ class Keychenga : JFrame("Keychenga") {
     private val aimLabel: JLabel
 
     private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
-    private val penalties = object : LinkedList<String>() {
-        override fun add(element: String): Boolean {
-            if (size >= 1024 && !contains(element)) {
-                removeFirst()
-            }
-            return super.add(element)
-        }
-    }
-    private val stickyPenalties = object : LinkedHashSet<String>() {
-        override fun add(element: String): Boolean {
-            if (size >= 1024 && !contains(element)) {
-                removeFirst()
-            }
-            return super.add(element)
-        }
-    }
+    private val penalties = LimitedArrayList<String>(1024)
+    private val stickyPenalties = LimitedArrayList<String>(1024)
 
     private fun play() {
         while (!Thread.currentThread().isInterrupted) {
             try {
                 val lines: MutableList<String> = ArrayList()
-                lines.addAll(loadLines("/functions.txt"))
-                if (System.getProperty("os.name").lowercase().contains("windows")) {
+                lines.addAll(loadLines("/f-keys.txt"))
+                if (!System.getProperty("os.name").lowercase().contains("windows")) {
                     // F10 triggers window menu on Windows :(
-                    lines.addAll(loadLines("/f9.txt"))
-                } else {
-                    lines.addAll(loadLines("/f9f10.txt"))
+                    lines.removeAll { it.contains("F10)") }
+                    repeat (2) { lines.add("F9") }
                 }
-//                lines.addAll(loadLines("/functions-modifiers.txt"))
+//                lines.addAll(loadLines("/f-keys-modifiers.txt"))
 //                lines.addAll(loadLines("/numbers.txt"))
 //                lines.addAll(loadLines("/symbols.txt"))
-//                lines.addAll(loadLines("/words.txt").subList(0, 30))
+//                lines.addAll(loadLines("/danish-symbols.txt"))
+//                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
                 println("-")
                 lines.shuffle()
                 println("lines=$lines")
-                println("stickyPenalties=$stickyPenalties")
                 question(lines)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -92,10 +77,9 @@ class Keychenga : JFrame("Keychenga") {
         val remainingLines = LinkedList(lines)
         val questionLines = ArrayList<String>()
         val questionBuilder = StringBuilder(" ")
-        val lineCounter = AtomicInteger(0)
-
-        var line: String
-        while (nextLine(lineCounter, remainingLines).also { line = it }.isNotEmpty()) {
+        println("stickyPenalties=$stickyPenalties")
+        var line = ""
+        while (nextLine(line, remainingLines, lines).also { line = it }.isNotEmpty()) {
             if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
                 questionBuilder.clear().append(" ")
@@ -107,8 +91,9 @@ class Keychenga : JFrame("Keychenga") {
         }
         // Fill in the rest of the remaining question line so it is not short.
         if (questionLines.isNotEmpty()) {
-            remainingLines.addAll(lines)
-            while (nextLine(lineCounter, remainingLines).also { line = it }.isNotEmpty()
+            val fillerLines = LinkedList(lines)
+            line = ""
+            while (nextLine(line, fillerLines, lines).also { line = it }.isNotEmpty()
                 && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
             ) {
                 questionBuilder.append(line).append(" ")
@@ -119,20 +104,63 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun nextLine(
-        counter: AtomicInteger,
-        remainingLines: MutableList<String>
-    ): String =
+        previousLine: String,
+        remainingLines: MutableList<String>,
+        originalLines: List<String>
+    ): String {
+        println("remainingLines=$remainingLines")
+        println("penalties=$penalties")
         if (remainingLines.isEmpty()) {
-            ""
-        } else if (penalties.isEmpty() || counter.incrementAndGet() % 2 == 0) {
-            if (penalties.isNotEmpty() || stickyPenalties.isEmpty() || Random.nextDouble() > 0.3) {
-                remainingLines.removeFirst()
+            return ""
+        } else if (penalties.isEmpty() || Random.nextDouble() > 0.5) {
+            if (stickyPenalties.isEmpty() || Random.nextDouble() > 0.2) {
+                return nextNotClashing(remainingLines, previousLine, originalLines)
             } else {
-                stickyPenalties.random()
+                val candidateLine = nextNotClashing(stickyPenalties, previousLine, originalLines)
+                stickyPenalties.add(candidateLine)
+                return candidateLine
             }
         } else {
-            penalties.removeAt(0)
+            return nextNotClashing(penalties, previousLine, originalLines)
         }
+    }
+
+    private fun nextNotClashing(
+        lines: MutableList<String>,
+        previousLine: String,
+        originalLines: List<String>
+    ): String {
+        var i = 0
+        var candidateLine = lines.getOrEmpty(i)
+        while (candidateLine.isNotEmpty() && clashes(previousLine, candidateLine)) {
+            i++
+            candidateLine = lines.getOrEmpty(i)
+        }
+        if (candidateLine.isNotEmpty()) {
+            candidateLine = lines.removeAt(i)
+        } else {
+            candidateLine = originalLines.random()
+            i = 0
+            while (clashes(candidateLine, previousLine) && i++ < 1024) {
+                candidateLine = originalLines.random()
+            }
+        }
+        return candidateLine
+    }
+
+    private fun clashes(previousLine: String, candidateLine: String): Boolean {
+        println("previousLine=$previousLine")
+        println("candidateLine=$candidateLine")
+        val previousLineSplit = previousLine.trim().split(" ")
+        val candidateLineSplit = candidateLine.trim().split(" ")
+        if (previousLineSplit.isEmpty() || candidateLineSplit.isEmpty()) {
+            return false
+        }
+        if (previousLineSplit.last() == candidateLineSplit.first()) {
+            return true
+        }
+        return previousLine == candidateLine
+    }
 
     private fun answer(
         questionLines: List<String>,
@@ -142,6 +170,7 @@ class Keychenga : JFrame("Keychenga") {
         questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
         val aimBuilder = StringBuilder()
+        println("stickyPenalties=$stickyPenalties")
         println("penalties=$penalties")
         println("question=[$question]")
         println("questionLength=" + question.length)
@@ -155,7 +184,7 @@ class Keychenga : JFrame("Keychenga") {
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
-                val key = inputQueue.poll(1, TimeUnit.SECONDS)
+                val key = inputQueue.poll(2, TimeUnit.SECONDS)
                 if (key == null) {
                     if (answerBuilder.isNotEmpty() && !penalties.contains(questionLine)) {
                         repeat(8) { penalties.add(questionLine) }
@@ -233,7 +262,9 @@ class Keychenga : JFrame("Keychenga") {
             if (key.keyChar.isDefined() || key.isActionKey) {
                 if (varAnswer != " ") {
                     repeat(16) { penalties.add(questionLine) }
-                    stickyPenalties.add(questionLine)
+                    if (!stickyPenalties.contains(questionLine)) {
+                        stickyPenalties.add(questionLine)
+                    }
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
@@ -315,4 +346,11 @@ class Keychenga : JFrame("Keychenga") {
         return lines
     }
 
+    private fun MutableList<String>.getOrEmpty(i: Int): String =
+        if (i < this.size) {
+            get(i)
+        } else {
+            println("Exhausted on get, i=$i, size=$size, this=$this")
+            ""
+        }
 }
