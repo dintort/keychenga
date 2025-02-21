@@ -89,14 +89,14 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun question(lines: List<String>) {
-        val bucket = LinkedList(lines)
+        val remainingLines = LinkedList(lines)
         val questionLines = ArrayList<String>()
         val questionBuilder = StringBuilder(" ")
-        val counter = AtomicInteger(0)
+        val lineCounter = AtomicInteger(0)
 
         var line: String
-        while (nextLine(counter, bucket).also { line = it }.isNotEmpty()) {
-            if (questionBuilder.length >= QUESTION_LENGTH_LIMIT) {
+        while (nextLine(lineCounter, remainingLines).also { line = it }.isNotEmpty()) {
+            if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
                 questionBuilder.clear().append(" ")
                 questionLines.clear()
@@ -106,25 +106,27 @@ class Keychenga : JFrame("Keychenga") {
             questionLines.add(line)
         }
         // Fill in the rest of the remaining question line so it is not short.
-        bucket.addAll(lines)
-        while (nextLine(counter, bucket).also { line = it }.isNotEmpty()
-            && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
-        ) {
-            questionBuilder.append(line).append(" ")
-            questionLines.add(line)
+        if (questionLines.isNotEmpty()) {
+            remainingLines.addAll(lines)
+            while (nextLine(lineCounter, remainingLines).also { line = it }.isNotEmpty()
+                && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
+            ) {
+                questionBuilder.append(line).append(" ")
+                questionLines.add(line)
+            }
+            answer(questionLines, questionBuilder.toString())
         }
-        answer(questionLines, questionBuilder.toString())
     }
 
     private fun nextLine(
         counter: AtomicInteger,
-        bucket: MutableList<String>
+        remainingLines: MutableList<String>
     ): String =
-        if (bucket.isEmpty()) {
+        if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isEmpty() || counter.incrementAndGet() % 2 == 0) {
             if (penalties.isNotEmpty() || stickyPenalties.isEmpty() || Random.nextDouble() > 0.3) {
-                bucket.removeFirst()
+                remainingLines.removeFirst()
             } else {
                 stickyPenalties.random()
             }
@@ -280,8 +282,8 @@ class Keychenga : JFrame("Keychenga") {
         typePanel.add(aimLabel, BorderLayout.SOUTH)
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
