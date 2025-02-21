@@ -90,12 +90,13 @@ class Keychenga : JFrame("Keychenga") {
 
     private fun question(lines: List<String>) {
         val bucket = LinkedList(lines)
-        val questionLines: MutableList<String> = ArrayList()
+        val questionLines = ArrayList<String>()
         val questionBuilder = StringBuilder(" ")
         val counter = AtomicInteger(0)
-        while (bucket.isNotEmpty()) {
-            val line = nextLine(counter) { bucket.removeFirst() }
-            if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
+
+        var line: String
+        while (nextLine(counter, bucket).also { line = it }.isNotEmpty()) {
+            if (questionBuilder.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
                 questionBuilder.clear().append(" ")
                 questionLines.clear()
@@ -104,23 +105,26 @@ class Keychenga : JFrame("Keychenga") {
             questionBuilder.append(line).append(" ")
             questionLines.add(line)
         }
-        val nextLineFunction = { lines.random() }
-        var line = nextLineFunction.invoke()
-        while (questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT) {
+        // Fill in the rest of the remaining question line so it is not short.
+        bucket.addAll(lines)
+        while (nextLine(counter, bucket).also { line = it }.isNotEmpty()
+            && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
+        ) {
             questionBuilder.append(line).append(" ")
             questionLines.add(line)
-            line = nextLine(counter, nextLineFunction)
         }
         answer(questionLines, questionBuilder.toString())
     }
 
     private fun nextLine(
         counter: AtomicInteger,
-        nextLineFunction: () -> String
+        bucket: MutableList<String>
     ): String =
-        if (penalties.isEmpty() || counter.incrementAndGet() % 2 == 0) {
+        if (bucket.isEmpty()) {
+            ""
+        } else if (penalties.isEmpty() || counter.incrementAndGet() % 2 == 0) {
             if (penalties.isNotEmpty() || stickyPenalties.isEmpty() || Random.nextDouble() > 0.3) {
-                nextLineFunction.invoke()
+                bucket.removeFirst()
             } else {
                 stickyPenalties.random()
             }
@@ -128,7 +132,10 @@ class Keychenga : JFrame("Keychenga") {
             penalties.removeAt(0)
         }
 
-    private fun answer(questionLines: List<String>, question: String) {
+    private fun answer(
+        questionLines: List<String>,
+        question: String
+    ) {
         val color = Color.BLACK
         questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
@@ -139,16 +146,19 @@ class Keychenga : JFrame("Keychenga") {
         SwingUtilities.invokeAndWait {
             questionLabel.setText(question)
             answerLabel.setText("")
-            aimLabel.setText("^")
+            aimLabel.setText(" ^")
         }
         println()
         for (questionLine in questionLines) {
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
-                val key = inputQueue.poll(5, TimeUnit.MINUTES)
+                val key = inputQueue.poll(1, TimeUnit.SECONDS)
                 if (key == null) {
-                    println("Waiting for input...")
+                    if (answerBuilder.isNotEmpty() && !penalties.contains(questionLine)) {
+                        repeat(8) { penalties.add(questionLine) }
+                        stickyPenalties.add(questionLine)
+                    }
                     continue
                 }
                 var answer = key.keyChar + ""
@@ -270,8 +280,8 @@ class Keychenga : JFrame("Keychenga") {
         typePanel.add(aimLabel, BorderLayout.SOUTH)
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
