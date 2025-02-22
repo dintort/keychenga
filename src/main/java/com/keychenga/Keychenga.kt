@@ -1,6 +1,7 @@
 package com.keychenga
 
-import com.keychenga.util.LimitedArrayList
+import com.keychenga.util.LimitedLinkedList
+import com.keychenga.util.getOrEmpty
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Font
@@ -45,7 +46,7 @@ class Keychenga : JFrame("Keychenga") {
     private val aimLabel: JLabel
 
     private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
-    private val penalties = LimitedArrayList<String>(1024)
+    private val penalties = LimitedLinkedList<String>(1024)
 
     private fun play() {
         while (!Thread.currentThread().isInterrupted) {
@@ -350,11 +351,4 @@ class Keychenga : JFrame("Keychenga") {
         return lines
     }
 
-    private fun MutableList<String>.getOrEmpty(i: Int): String =
-        if (i < kotlin.math.min(8, this.size)) {
-            get(i)
-        } else {
-            println("Exhausted on get, i=$i, size=$size, this=$this")
-            ""
-        }
 }
