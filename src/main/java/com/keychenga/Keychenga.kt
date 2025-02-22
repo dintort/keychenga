@@ -1,7 +1,5 @@
 package com.keychenga
 
-import com.keychenga.util.LimitedLinkedList
-import com.keychenga.util.getOrEmpty
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Font
