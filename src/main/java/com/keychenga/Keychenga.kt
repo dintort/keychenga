@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import javax.swing.ImageIcon
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -57,7 +58,7 @@ class Keychenga : JFrame("Keychenga") {
                     repeat(2) { lines.add("F9") }
                 }
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
-//                lines.addAll(loadLines("/numbers.txt"))
+                lines.addAll(loadLines("/numbers.txt"))
 //                lines.addAll(loadLines("/symbols.txt"))
 //                lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
@@ -76,8 +77,8 @@ class Keychenga : JFrame("Keychenga") {
         val remainingLines = LinkedList(lines)
         val questionLines = ArrayList<String>()
         val questionBuilder = StringBuilder(" ")
-        var line = ""
-        while (nextLine(line, remainingLines, lines, questionBuilder).also { line = it }.isNotEmpty()) {
+        var line: String
+        while (nextLine(remainingLines, lines, questionBuilder).also { line = it }.isNotEmpty()) {
             if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
                 questionBuilder.clear().append(" ")
@@ -90,8 +91,7 @@ class Keychenga : JFrame("Keychenga") {
         // Fill in the rest of the remaining question line so it is not short.
         if (questionLines.isNotEmpty()) {
             val fillerLines = LinkedList(lines)
-            line = ""
-            while (nextLine(line, fillerLines, lines, questionBuilder).also { line = it }.isNotEmpty()
+            while (nextLine(fillerLines, lines, questionBuilder).also { line = it }.isNotEmpty()
                 && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
             ) {
                 questionBuilder.append(line).append(" ")
@@ -102,7 +102,6 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun nextLine(
-        previousLine: String,
         remainingLines: MutableList<String>,
         originalLines: List<String>,
         questionBuilder: StringBuilder
@@ -113,20 +112,20 @@ class Keychenga : JFrame("Keychenga") {
         return if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isEmpty() || Random.nextDouble() > 0.5) {
-            nextNotClashing(remainingLines, previousLine, originalLines)
+            nextNotClashing(remainingLines, originalLines, questionBuilder)
         } else {
-            nextNotClashing(penalties, previousLine, originalLines)
+            nextNotClashing(penalties, originalLines, questionBuilder)
         }
     }
 
     private fun nextNotClashing(
         lines: MutableList<String>,
-        previousLine: String,
-        originalLines: List<String>
+        originalLines: List<String>,
+        questionBuilder: StringBuilder
     ): String {
         var i = 0
         var candidateLine = lines.getOrEmpty(i)
-        while (candidateLine.isNotEmpty() && clashes(previousLine, candidateLine)) {
+        while (candidateLine.isNotEmpty() && clashes(candidateLine, questionBuilder)) {
             i++
             candidateLine = lines.getOrEmpty(i)
         }
@@ -135,7 +134,7 @@ class Keychenga : JFrame("Keychenga") {
         } else {
             candidateLine = originalLines.random()
             i = 0
-            while (clashes(candidateLine, previousLine) && i++ < 1024) {
+            while (clashes(candidateLine, questionBuilder) && i++ < 1024) {
                 candidateLine = originalLines.random()
             }
         }
@@ -143,18 +142,33 @@ class Keychenga : JFrame("Keychenga") {
         return candidateLine
     }
 
-    private fun clashes(previousLine: String, candidateLine: String): Boolean {
-        println("previousLine=$previousLine")
-        println("candidateLine=$candidateLine")
-        val previousLineSplit = previousLine.trim().split(" ")
+    private fun clashes(
+        candidateLine: String,
+        questionBuilder: StringBuilder
+    ): Boolean {
         val candidateLineSplit = candidateLine.trim().split(" ")
-        if (previousLineSplit.isEmpty() || candidateLineSplit.isEmpty()) {
+        if (candidateLineSplit.isEmpty()) {
             return false
         }
-        if (previousLineSplit.last() == candidateLineSplit.first()) {
+
+        val questionSplit = questionBuilder.trim().toString().split(" ")
+        val prevWord = if (questionSplit.isNotEmpty()) { questionSplit.last() } else { "" }
+        val prevPrevWord = if (questionSplit.size > 1) { questionSplit[questionSplit.size - 2] } else { "" }
+
+        println("prevPrevWord=$prevPrevWord")
+        println("prevWord=$prevWord")
+        println("candidateLine=$candidateLine")
+
+        if (candidateLineSplit.first() == prevWord) {
             return true
         }
-        return previousLine == candidateLine
+        if (candidateLineSplit.first() == prevPrevWord) {
+            return true
+        }
+        if (candidateLineSplit.size > 1 && candidateLineSplit[1] == prevWord) {
+            return true
+        }
+        return false
     }
 
     private fun answer(
@@ -284,8 +298,8 @@ class Keychenga : JFrame("Keychenga") {
         val mainPanel = JPanel()
         mainPanel.setLayout(BorderLayout())
         contentPane.add(mainPanel)
-        //        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
-        //        mainPanel.add(pictureLabel, BorderLayout.NORTH)
+        val pictureLabel = JLabel(ImageIcon(javaClass.getResource("/touch-type.png")))
+        mainPanel.add(pictureLabel, BorderLayout.NORTH)
         val typePanel = JPanel()
         typePanel.setLayout(BorderLayout())
         mainPanel.add(typePanel, BorderLayout.CENTER)
@@ -338,7 +352,7 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun MutableList<String>.getOrEmpty(i: Int): String =
-        if (i < this.size) {
+        if (i < kotlin.math.min(8, this.size)) {
             get(i)
         } else {
             println("Exhausted on get, i=$i, size=$size, this=$this")
