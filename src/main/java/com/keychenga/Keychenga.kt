@@ -55,7 +55,6 @@ class Keychenga : JFrame("Keychenga") {
                 if (!System.getProperty("os.name").lowercase().contains("windows")) {
                     // F10 triggers window menu on Windows :(
                     lines.removeAll { it.contains("F10)") }
-                    repeat(2) { lines.add("F9") }
                 }
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
                 lines.addAll(loadLines("/numbers.txt"))
