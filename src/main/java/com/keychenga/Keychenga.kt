@@ -112,8 +112,11 @@ class Keychenga : JFrame("Keychenga") {
         println("questionBuilder=$questionBuilder")
         return if (remainingLines.isEmpty()) {
             ""
-        } else if (penalties.isNotEmpty() && Random.nextDouble() < 0.7) {
-            nextNotClashing(penalties, originalLines, questionBuilder)
+        } else if (penalties.isNotEmpty()
+            && Random.nextDouble() < 0.6
+            && !clashes(penalties.first, questionBuilder)
+        ) {
+            penalties.removeFirst()
         } else {
             nextNotClashing(remainingLines, originalLines, questionBuilder)
         }
