@@ -150,8 +150,8 @@ class Keychenga : JFrame("Keychenga") {
         }
 
         val questionSplit = questionBuilder.trim().toString().split(" ")
-        val prevWord = if (questionSplit.isNotEmpty()) { questionSplit.last() } else { "" }
-        val prevPrevWord = if (questionSplit.size > 1) { questionSplit[questionSplit.size - 2] } else { "" }
+        val prevWord = if (questionSplit.isNotEmpty()) questionSplit.last() else ""
+        val prevPrevWord = if (questionSplit.size > 1) questionSplit[questionSplit.size - 2] else ""
 
         println("prevPrevWord=$prevPrevWord")
         println("prevWord=$prevWord")
@@ -191,6 +191,11 @@ class Keychenga : JFrame("Keychenga") {
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
+                if (questionLineWithLeadingSpace.startsWith(" ")) {
+                    SwingUtilities.invokeLater {
+                        aimLabel.setText("$aimBuilder ^")
+                    }
+                }
                 val key = inputQueue.poll(2, TimeUnit.SECONDS)
                 if (key == null) {
                     if (answerBuilder.isNotEmpty() && !penalties.contains(questionLine)) {
@@ -262,11 +267,7 @@ class Keychenga : JFrame("Keychenga") {
             SwingUtilities.invokeLater {
                 answerLabel.setForeground(Color.BLACK)
                 answerLabel.setText(answerBuilder.toString())
-                if (varQuestionLineWithLeadingSpace.isEmpty()) {
-                    aimLabel.setText("$aimBuilder ^")
-                } else {
-                    aimLabel.setText("$aimBuilder^")
-                }
+                aimLabel.setText("$aimBuilder^")
             }
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
