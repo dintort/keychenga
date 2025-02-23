@@ -44,14 +44,14 @@ class Keychenga : JFrame("Keychenga") {
     private val aimLabel: JLabel
 
     private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
-    private val penalties = LimitedLinkedList<String>(1024)
+    private val penalties = LimitedLinkedList<String>(8192)
 
     private fun play() {
         while (!Thread.currentThread().isInterrupted) {
             try {
                 val lines: MutableList<String> = ArrayList()
                 lines.addAll(loadLines("/f-keys.txt"))
-                lines.addAll(loadLines("/numbers.txt"))
+//                lines.addAll(loadLines("/numbers.txt"))
 //                lines.addAll(loadLines("/symbols.txt"))
 //                lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
@@ -86,14 +86,17 @@ class Keychenga : JFrame("Keychenga") {
             questionBuilder.append(line).append(" ")
             questionLines.add(line)
         }
-        // Fill in the rest of the remaining question line so it is not short.
+        // Fill in the rest of the question line so it is not short.
         if (questionLines.isNotEmpty()) {
-            val fillerLines = LinkedList(lines)
-            while (nextLine(fillerLines, lines, questionBuilder).also { line = it }.isNotEmpty()
-                && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
-            ) {
-                questionBuilder.append(line).append(" ")
-                questionLines.add(line)
+            while (questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT) {
+                remainingLines.addAll(lines)
+                remainingLines.shuffle()
+                while (nextLine(remainingLines, lines, questionBuilder).also { line = it }.isNotEmpty()
+                    && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
+                ) {
+                    questionBuilder.append(line).append(" ")
+                    questionLines.add(line)
+                }
             }
             answer(questionLines, questionBuilder.toString())
         }
@@ -272,7 +275,7 @@ class Keychenga : JFrame("Keychenga") {
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
                 if (varAnswer != " ") {
-                    repeat(16) { penalties.add(questionLine) }
+                    repeat(32) { penalties.add(questionLine) }
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
