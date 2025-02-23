@@ -262,7 +262,11 @@ class Keychenga : JFrame("Keychenga") {
             SwingUtilities.invokeLater {
                 answerLabel.setForeground(Color.BLACK)
                 answerLabel.setText(answerBuilder.toString())
-                aimLabel.setText("$aimBuilder^")
+                if (varQuestionLineWithLeadingSpace.isEmpty()) {
+                    aimLabel.setText("$aimBuilder ^")
+                } else {
+                    aimLabel.setText("$aimBuilder^")
+                }
             }
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
