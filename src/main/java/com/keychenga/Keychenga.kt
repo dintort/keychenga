@@ -51,7 +51,7 @@ class Keychenga : JFrame("Keychenga") {
             try {
                 val lines: MutableList<String> = ArrayList()
                 lines.addAll(loadLines("/f-keys.txt"))
-//                lines.addAll(loadLines("/numbers.txt"))
+                lines.addAll(loadLines("/numbers.txt"))
 //                lines.addAll(loadLines("/symbols.txt"))
 //                lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
@@ -109,10 +109,10 @@ class Keychenga : JFrame("Keychenga") {
         println("questionBuilder=$questionBuilder")
         return if (remainingLines.isEmpty()) {
             ""
-        } else if (penalties.isEmpty() || Random.nextDouble() > 0.5) {
-            nextNotClashing(remainingLines, originalLines, questionBuilder)
-        } else {
+        } else if (penalties.isNotEmpty() && Random.nextDouble() < 0.7) {
             nextNotClashing(penalties, originalLines, questionBuilder)
+        } else {
+            nextNotClashing(remainingLines, originalLines, questionBuilder)
         }
     }
 
