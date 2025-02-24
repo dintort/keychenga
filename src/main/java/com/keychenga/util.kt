@@ -7,10 +7,12 @@ class LimitedLinkedList<E>(
 ) : LinkedList<E>() {
 
     override fun add(element: E): Boolean {
-        if (size >= limit && !contains(element)) {
-            removeFirst()
+        if (size >= limit) {
+            println("Limit=$limit exceeded, skipping")
+            return false
+        } else {
+            return super.add(element)
         }
-        return super.add(element)
     }
 }
 

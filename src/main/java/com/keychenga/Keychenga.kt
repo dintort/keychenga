@@ -20,7 +20,6 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import kotlin.random.Random
 import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 75
@@ -113,7 +112,6 @@ class Keychenga : JFrame("Keychenga") {
         return if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isNotEmpty()
-            && Random.nextDouble() < 0.6
             && !clashes(penalties.first, questionBuilder)
         ) {
             penalties.removeFirst()
