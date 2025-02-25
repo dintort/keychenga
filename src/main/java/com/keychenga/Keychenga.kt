@@ -43,7 +43,7 @@ class Keychenga : JFrame("Keychenga") {
     private val aimLabel: JLabel
 
     private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
-    private val penalties = LimitedLinkedList<String>(8192)
+    private val penalties = LimitedLinkedList<String>(1024)
 
     private fun play() {
         while (!Thread.currentThread().isInterrupted) {
