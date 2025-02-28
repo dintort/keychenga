@@ -166,7 +166,7 @@ class Keychenga : JFrame("Keychenga") {
         if (candidateLineSplit.size > 1 && candidateLineSplit[1] == prevWord) {
             return true
         }
-        if (questionBuilder.endsWith(candidateLine)) {
+        if (questionBuilder.trim().endsWith(candidateLine.trim())) {
             return true
         }
         return false
