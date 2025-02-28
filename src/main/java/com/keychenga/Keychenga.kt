@@ -55,10 +55,6 @@ class Keychenga : JFrame("Keychenga") {
                 lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
-                if (!System.getProperty("os.name").lowercase().contains("windows")) {
-                    // F10 triggers window menu on Windows :(
-                    lines.removeAll { it.contains("F10)") }
-                }
                 println("-")
                 lines.shuffle()
                 println("lines=$lines")
@@ -338,9 +334,10 @@ class Keychenga : JFrame("Keychenga") {
             val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
             manager.addKeyEventPostProcessor { event: KeyEvent ->
                 if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
+                    event.consume()
                     inputQueue.add(event)
                 }
-                false
+                true
             }
 
         } catch (e: Exception) {
