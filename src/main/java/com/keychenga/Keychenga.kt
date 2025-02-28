@@ -32,6 +32,7 @@ private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
     "⇧" to "Shift",
     "⎋" to "Escape",
 )
+private val IS_WINDOWS = System.getProperty("os.name").lowercase().contains("windows")
 
 fun main() {
     Keychenga().isVisible = true
@@ -51,7 +52,7 @@ class Keychenga : JFrame("Keychenga") {
                 val lines: MutableList<String> = ArrayList()
                 lines.addAll(loadLines("/f-keys.txt"))
                 lines.addAll(loadLines("/numbers.txt"))
-//                lines.addAll(loadLines("/symbols.txt"))
+                if (IS_WINDOWS) lines.addAll(loadLines("/symbols.txt"))
                 lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
@@ -334,6 +335,12 @@ class Keychenga : JFrame("Keychenga") {
             val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
             manager.addKeyEventPostProcessor { event: KeyEvent ->
                 if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
+                    if (IS_WINDOWS
+                        && event.keyCode == KeyEvent.VK_F4
+                        && event.modifiersEx and KeyEvent.ALT_DOWN_MASK != 0
+                    ) {
+                        return@addKeyEventPostProcessor false
+                    }
                     event.consume()
                     inputQueue.add(event)
                 }
