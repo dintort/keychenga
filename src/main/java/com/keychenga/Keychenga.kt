@@ -50,9 +50,9 @@ class Keychenga : JFrame("Keychenga") {
             try {
                 val lines: MutableList<String> = ArrayList()
                 lines.addAll(loadLines("/f-keys.txt"))
-//                lines.addAll(loadLines("/numbers.txt"))
+                lines.addAll(loadLines("/numbers.txt"))
 //                lines.addAll(loadLines("/symbols.txt"))
-//                lines.addAll(loadLines("/danish-symbols.txt"))
+                lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
                 if (!System.getProperty("os.name").lowercase().contains("windows")) {
@@ -170,6 +170,9 @@ class Keychenga : JFrame("Keychenga") {
         if (candidateLineSplit.size > 1 && candidateLineSplit[1] == prevWord) {
             return true
         }
+        if (questionBuilder.endsWith(candidateLine)) {
+            return true
+        }
         return false
     }
 
@@ -195,11 +198,6 @@ class Keychenga : JFrame("Keychenga") {
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
-                if (questionLineWithLeadingSpace.startsWith(" ")) {
-                    SwingUtilities.invokeLater {
-                        aimLabel.setText("$aimBuilder ^")
-                    }
-                }
                 val key = inputQueue.poll(2, TimeUnit.SECONDS)
                 if (key == null) {
                     if (answerBuilder.isNotEmpty() && !penalties.contains(questionLine)) {
@@ -276,7 +274,8 @@ class Keychenga : JFrame("Keychenga") {
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
                 if (varAnswer != " ") {
-                    repeat(32) { penalties.add(questionLine) }
+                    val times = if (questionLine.length <= 3) 32 else 8
+                    repeat(times) { penalties.add(questionLine) }
                 }
                 SwingUtilities.invokeLater {
                     answerLabel.setForeground(Color.RED)
@@ -325,8 +324,8 @@ class Keychenga : JFrame("Keychenga") {
         typePanel.add(aimLabel, BorderLayout.SOUTH)
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
