@@ -20,6 +20,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.random.Random
 import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 75
@@ -110,9 +111,9 @@ class Keychenga : JFrame("Keychenga") {
         return if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isNotEmpty()
-            && !clashes(penalties.first, questionBuilder)
+            && Random.nextDouble() < 0.9
         ) {
-            penalties.removeFirst()
+            nextNotClashing(penalties, originalLines, questionBuilder)
         } else {
             nextNotClashing(remainingLines, originalLines, questionBuilder)
         }
@@ -267,7 +268,13 @@ class Keychenga : JFrame("Keychenga") {
             SwingUtilities.invokeLater {
                 answerLabel.setForeground(Color.BLACK)
                 answerLabel.setText(answerBuilder.toString())
-                aimLabel.setText("$aimBuilder^")
+                if (varQuestionLineWithLeadingSpace.isEmpty()
+                    || varQuestionLineWithLeadingSpace.startsWith(" ")
+                ) {
+                    aimLabel.setText("$aimBuilder ^")
+                } else {
+                    aimLabel.setText("$aimBuilder^")
+                }
             }
         } else {
             if (key.keyChar.isDefined() || key.isActionKey) {
