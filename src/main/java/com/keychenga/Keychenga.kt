@@ -52,7 +52,7 @@ class Keychenga : JFrame("Keychenga") {
             try {
                 val lines: MutableList<String> = ArrayList()
                 lines.addAll(loadLines("/f-keys.txt"))
-                lines.addAll(loadLines("/f-keys-modifiers.txt"))
+//                lines.addAll(loadLines("/f-keys-modifiers.txt"))
                 lines.addAll(loadLines("/numbers.txt"))
                 if (IS_WINDOWS)
                     lines.addAll(loadLines("/symbols.txt"))
@@ -330,7 +330,7 @@ class Keychenga : JFrame("Keychenga") {
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
