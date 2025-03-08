@@ -7,5 +7,3 @@ CtrlF12
 AltShiftF9
 AltShiftF10
 AltF1
-CtrlT
-CtrlShiftT
