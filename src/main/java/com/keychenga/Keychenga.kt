@@ -54,7 +54,7 @@ class Keychenga : JFrame("Keychenga") {
                 lines.addAll(loadLines("/f-keys.txt"))
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
                 lines.addAll(loadLines("/numbers.txt"))
-                if (IS_WINDOWS)
+//                if (IS_WINDOWS)
                     lines.addAll(loadLines("/symbols.txt"))
                 lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
