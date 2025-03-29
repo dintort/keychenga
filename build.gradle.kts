@@ -82,6 +82,13 @@ tasks.register<Exec>("packageMacApp") {
     )
 }
 
+tasks.register<Copy>("copyMacApp") {
+    dependsOn("packageMacApp")
+    from(layout.buildDirectory.dir("."))
+    into(System.getProperty("user.home") + "/Documents/kchng/")
+    include("Keychenga.app/**")
+}
+
 tasks.assemble {
-    finalizedBy("packageMacApp")
+    finalizedBy("copyMacApp")
 }
