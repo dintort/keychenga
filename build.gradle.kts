@@ -66,7 +66,7 @@ tasks.register<Exec>("packageMacApp") {
         "--name", "Keychenga",
         "--dest", "build/",
         "--type", "app-image",
-//        "--icon", "src/main/resources/keychenga.icns",
+        "--icon", "src/main/resources/keychenga.icns",
         "--app-version", "1.0.0",
         "--vendor", "Your Name",
         "--mac-package-name", "Keychenga",
