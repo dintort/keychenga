@@ -330,7 +330,7 @@ class Keychenga : JFrame("Keychenga") {
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
