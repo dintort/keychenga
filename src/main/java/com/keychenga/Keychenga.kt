@@ -111,7 +111,7 @@ class Keychenga : JFrame("Keychenga") {
         return if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isNotEmpty()
-            && Random.nextDouble() < 0.9
+            && Random.nextDouble() < 0.5
         ) {
             nextNotClashing(penalties, originalLines, questionBuilder)
         } else {
