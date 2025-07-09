@@ -197,13 +197,7 @@ class Keychenga : JFrame("Keychenga") {
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
-                val key = inputQueue.poll(2, TimeUnit.SECONDS)
-                if (key == null) {
-                    if (answerBuilder.isNotEmpty() && !penalties.contains(questionLine)) {
-                        repeat(8) { penalties.add(questionLine) }
-                    }
-                    continue
-                }
+                val key = inputQueue.poll(60, TimeUnit.SECONDS) ?: continue
                 var answer = key.keyChar + ""
                 if (!key.keyChar.isDefined()
                     || key.isActionKey
