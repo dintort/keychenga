@@ -111,7 +111,7 @@ class Keychenga : JFrame("Keychenga") {
         return if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isNotEmpty()
-            && Random.nextDouble() < 0.9
+            && Random.nextDouble() < 0.5
         ) {
             nextNotClashing(penalties, originalLines, questionBuilder)
         } else {
@@ -197,13 +197,7 @@ class Keychenga : JFrame("Keychenga") {
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
-                val key = inputQueue.poll(2, TimeUnit.SECONDS)
-                if (key == null) {
-                    if (answerBuilder.isNotEmpty() && !penalties.contains(questionLine)) {
-                        repeat(8) { penalties.add(questionLine) }
-                    }
-                    continue
-                }
+                val key = inputQueue.poll(60, TimeUnit.SECONDS) ?: continue
                 var answer = key.keyChar + ""
                 if (!key.keyChar.isDefined()
                     || key.isActionKey
@@ -330,7 +324,7 @@ class Keychenga : JFrame("Keychenga") {
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
