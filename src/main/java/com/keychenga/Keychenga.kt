@@ -25,11 +25,13 @@ import kotlin.system.exitProcess
 
 const val QUESTION_LENGTH_LIMIT = 75
 private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
-//        "⌘" to "Windows",
-    "⌘" to "Alt",
-//        "⌥" to "Alt",
-    "⌥" to "Windows",
-    "⌃" to "Ctrl",
+//    "⌘" to "Windows",
+    "⌘" to "Ctrl",
+//    "⌘" to "Alt",
+    "⌥" to "Alt",
+//    "⌥" to "Windows",
+//    "⌃" to "Ctrl",
+    "⌃" to "Windows",
     "⇧" to "Shift",
     "⎋" to "Escape",
 )
@@ -55,7 +57,7 @@ class Keychenga : JFrame("Keychenga") {
 //                lines.addAll(loadLines("/f-keys-modifiers.txt"))
                 lines.addAll(loadLines("/numbers.txt"))
 //                if (IS_WINDOWS)
-                    lines.addAll(loadLines("/symbols.txt"))
+                lines.addAll(loadLines("/symbols.txt"))
                 lines.addAll(loadLines("/danish-symbols.txt"))
 //                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
                 println("-")
@@ -103,7 +105,7 @@ class Keychenga : JFrame("Keychenga") {
     private fun nextLine(
         remainingLines: MutableList<String>,
         originalLines: List<String>,
-        questionBuilder: StringBuilder
+        questionBuilder: StringBuilder,
     ): String {
         println("penalties=$penalties")
         println("remainingLines=$remainingLines")
@@ -122,7 +124,7 @@ class Keychenga : JFrame("Keychenga") {
     private fun nextNotClashing(
         lines: MutableList<String>,
         originalLines: List<String>,
-        questionBuilder: StringBuilder
+        questionBuilder: StringBuilder,
     ): String {
         var i = 0
         var candidateLine = lines.getOrEmpty(i)
@@ -145,7 +147,7 @@ class Keychenga : JFrame("Keychenga") {
 
     private fun clashes(
         candidateLine: String,
-        questionBuilder: StringBuilder
+        questionBuilder: StringBuilder,
     ): Boolean {
         val candidateLineSplit = candidateLine.trim().split(" ")
         if (candidateLineSplit.isEmpty()) {
@@ -177,7 +179,7 @@ class Keychenga : JFrame("Keychenga") {
 
     private fun answer(
         questionLines: List<String>,
-        question: String
+        question: String,
     ) {
         val color = Color.BLACK
         questionLabel.setForeground(color)
@@ -246,7 +248,7 @@ class Keychenga : JFrame("Keychenga") {
         aimBuilder: StringBuilder,
         answerBuilder: StringBuilder,
         key: KeyEvent,
-        questionLine: String
+        questionLine: String,
     ): String {
         var varQuestionLineWithLeadingSpace = questionLineWithLeadingSpace
         var varAnswer = answer
@@ -323,8 +325,8 @@ class Keychenga : JFrame("Keychenga") {
         typePanel.add(aimLabel, BorderLayout.SOUTH)
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-//        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
-        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
+        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 2 - size.height / 2)
+//        setLocation(screenSize.width / 2 - size.width / 2 - size.width / 3, screenSize.height / 2 - size.height / 2)
 //        setLocation(screenSize.width / 2 - size.width / 2, screenSize.height / 6 - size.height / 2)
 //        setLocation(screenSize.width / 2 + screenSize.width / -size.width / 2, screenSize.height / 2 - size.height / 2)
 
