@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.prefs.BackingStoreException
 import java.util.prefs.Preferences
 import java.util.zip.ZipInputStream
 import javax.swing.BorderFactory
@@ -30,7 +31,7 @@ import javax.swing.SwingUtilities
 import kotlin.random.Random
 
 const val QUESTION_LENGTH_LIMIT = 75
-const val PREF_KEY_DRILL_SELECTED_PREFIX = "drill_selected_"
+const val PREFERENCES_KEY_DRILL_SELECTED_PREFIX = "drill_selected_"
 
 private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
 //    "⌘" to "Windows",
@@ -52,7 +53,7 @@ fun main() {
 }
 
 class Keychenga : JFrame("Keychenga") {
-    private val prefsNode = Preferences.userNodeForPackage(Keychenga::class.java)
+    private val preferences = Preferences.userNodeForPackage(Keychenga::class.java)
 
     private val questionLabel: JLabel
     private val answerLabel: JLabel
@@ -423,19 +424,19 @@ class Keychenga : JFrame("Keychenga") {
         availableDrillFiles.forEach { filePath ->
             // Extract a display name (e.g., "f-keys.txt" from "drills/f-keys.txt")
             val displayName = filePath.substring(filePath.lastIndexOf('/') + 1)
-            val preferenceKey = PREF_KEY_DRILL_SELECTED_PREFIX + filePath.replace("/", "_") // Create a valid pref key
+            val preferenceKey = PREFERENCES_KEY_DRILL_SELECTED_PREFIX + filePath.replace("/", "_") // Create a valid pref key
 
-            val isSelected = prefsNode.getBoolean(preferenceKey, false)
+            val isSelected = preferences.getBoolean(preferenceKey, false)
             val checkBox = JCheckBox(displayName, isSelected)
             checkBox.isFocusable = false
 
             checkBox.addItemListener { event ->
                 val currentCheckBox = event.source as JCheckBox
                 val selected = currentCheckBox.isSelected
-                prefsNode.putBoolean(preferenceKey, selected)
+                preferences.putBoolean(preferenceKey, selected)
                 try {
-                    prefsNode.flush() // Ensure preferences are written to persistent storage
-                } catch (e: java.util.prefs.BackingStoreException) {
+                    preferences.flush() // Ensure preferences are written to persistent storage
+                } catch (e: BackingStoreException) {
                     System.err.println("Error saving preferences, error=$e")
                     e.printStackTrace()
                 }
