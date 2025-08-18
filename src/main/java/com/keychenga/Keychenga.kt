@@ -15,6 +15,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipInputStream
 import javax.swing.ImageIcon
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -53,13 +54,7 @@ class Keychenga : JFrame("Keychenga") {
         while (!Thread.currentThread().isInterrupted) {
             try {
                 val lines: MutableList<String> = ArrayList()
-                lines.addAll(loadLines("/f-keys.txt"))
-//                lines.addAll(loadLines("/f-keys-modifiers.txt"))
-                lines.addAll(loadLines("/numbers.txt"))
-//                if (IS_WINDOWS)
-                lines.addAll(loadLines("/symbols.txt"))
-                lines.addAll(loadLines("/danish-symbols.txt"))
-//                lines.addAll(loadLines("/danish-words.txt").subList(0, 30))
+                lines.addAll(loadLinesFromDrillsFolder()) // Dynamically load drills
                 println("-")
                 lines.shuffle()
                 println("lines=$lines")
@@ -70,6 +65,53 @@ class Keychenga : JFrame("Keychenga") {
             }
         }
     }
+
+    private fun loadLinesFromDrillsFolder(): List<String> {
+        val allLines = mutableListOf<String>()
+        val drillsPath = "/drills/"
+        val classLoader = this.javaClass.classLoader
+        val folderUrl = this.javaClass.getResource(drillsPath)
+
+        if (folderUrl == null) {
+            System.err.println("Drills folder not found: $drillsPath")
+            return allLines
+        }
+
+        // When running from a JAR, the resources are accessed differently
+        if (folderUrl.protocol == "jar") {
+            val jarPath = folderUrl.path.substring(5, folderUrl.path.indexOf("!"))
+            try {
+                ZipInputStream(java.io.FileInputStream(jarPath)).use { zis ->
+                    var entry = zis.nextEntry
+                    while (entry != null) {
+                        if (!entry.isDirectory && entry.name.startsWith(drillsPath.drop(1)) && entry.name.endsWith(".txt")) {
+                            println("Loading drill file: /${entry.name}")
+                            allLines.addAll(loadLines("/${entry.name}"))
+                        }
+                        entry = zis.nextEntry
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                System.err.println("Error reading drills from JAR: ${e.message}")
+            }
+        } else { // When running from file system (e.g., in IDE)
+            try {
+                val folder = java.io.File(folderUrl.toURI())
+                folder.listFiles { file -> file.isFile && file.name.endsWith(".txt") }
+                    ?.forEach { file ->
+                        val resourcePath = drillsPath + file.name
+                        println("Loading drill file: $resourcePath")
+                        allLines.addAll(loadLines(resourcePath))
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                System.err.println("Error reading drills from file system: ${e.message}")
+            }
+        }
+        return allLines
+    }
+
 
     private fun question(lines: List<String>) {
         val remainingLines = LinkedList(lines)
