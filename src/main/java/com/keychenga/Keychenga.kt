@@ -66,11 +66,9 @@ class Keychenga : JFrame("Keychenga") {
     private var gameExecutor = Executors.newSingleThreadExecutor()
 
     private fun startGame() {
-        // Ensure previous game thread is stopped if running
         if (!gameExecutor.isShutdown) {
-            gameExecutor.shutdownNow() // Interrupts the running thread
+            gameExecutor.shutdownNow()
             try {
-                // Wait for the thread to terminate
                 if (!gameExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
                     System.err.println("Game thread did not terminate in time.")
                 }
@@ -78,38 +76,39 @@ class Keychenga : JFrame("Keychenga") {
                 Thread.currentThread().interrupt()
             }
         }
-        gameExecutor = Executors.newSingleThreadExecutor() // Create a new one
+        penalties.clear()
+        gameExecutor = Executors.newSingleThreadExecutor()
         gameExecutor.execute { play() }
     }
 
-
     private fun play() {
-        try {
-            val selectedLines = loadSelectedDrillLines()
-            if (selectedLines.isEmpty()) {
-                SwingUtilities.invokeLater {
-                    questionLabel.text = " Please select at least one drill file."
-                    answerLabel.text = ""
-                    aimLabel.text = ""
+        while (!Thread.currentThread().isInterrupted) {
+            try {
+                val selectedLines = loadSelectedDrillLines()
+                if (selectedLines.isEmpty()) {
+                    SwingUtilities.invokeLater {
+                        questionLabel.text = " Please select at least one drill file."
+                        answerLabel.text = ""
+                        aimLabel.text = ""
+                    }
+                    return
                 }
-                return
-            }
-            println("-")
-            selectedLines.shuffle()
-            println("lines=$selectedLines")
-            question(selectedLines)
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt() // Restore interruption status
-            println("Game interrupted.")
-        } catch (e: Exception) {
-            if (Thread.currentThread().isInterrupted) {
-                println("Game loop interrupted during exception handling.")
-                return
-            }
-            e.printStackTrace()
-            // Avoid exiting the process if it's just a game restart
-            SwingUtilities.invokeLater {
-                questionLabel.text = "Error occurred. Restarting..."
+                println("-")
+                selectedLines.shuffle()
+                println("lines=$selectedLines")
+                question(selectedLines)
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt() // Restore interruption status
+                println("Game interrupted.")
+            } catch (e: Exception) {
+                if (Thread.currentThread().isInterrupted) {
+                    println("Game loop interrupted during exception handling.")
+                    return
+                }
+                e.printStackTrace()
+                SwingUtilities.invokeLater {
+                    questionLabel.text = "Error occurred. Restarting..."
+                }
             }
         }
     }
@@ -150,7 +149,7 @@ class Keychenga : JFrame("Keychenga") {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                System.err.println("Error discovering drills from JAR: ${e.message}")
+                System.err.println("Error discovering drills from JAR, error=$e")
             }
         } else {
             try {
@@ -183,10 +182,6 @@ class Keychenga : JFrame("Keychenga") {
         val questionBuilder = StringBuilder(" ")
         var line: String
         while (nextLine(remainingLines, lines, questionBuilder).also { line = it }.isNotEmpty()) {
-            if (Thread.currentThread().isInterrupted) {
-                println("Question generation interrupted.")
-                return
-            }
             if (questionBuilder.length + line.length >= QUESTION_LENGTH_LIMIT) {
                 answer(questionLines, questionBuilder.toString())
                 questionBuilder.clear().append(" ")
@@ -199,16 +194,11 @@ class Keychenga : JFrame("Keychenga") {
         // Fill in the rest of the question line so it is not short.
         if (questionLines.isNotEmpty()) {
             while (questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT) {
-                if (Thread.currentThread().isInterrupted) {
-                    println("Question filling interrupted.")
-                    return
-                }
                 remainingLines.addAll(lines) // Use the initially passed lines for refilling
                 remainingLines.shuffle()
                 while (nextLine(remainingLines, lines, questionBuilder).also { line = it }.isNotEmpty()
                     && questionBuilder.length + line.length < QUESTION_LENGTH_LIMIT
                 ) {
-                    if (Thread.currentThread().isInterrupted) return
                     questionBuilder.append(line).append(" ")
                     questionLines.add(line)
                 }
@@ -225,7 +215,6 @@ class Keychenga : JFrame("Keychenga") {
         originalLines: List<String>,
         questionBuilder: StringBuilder,
     ): String {
-        if (Thread.currentThread().isInterrupted) return ""
         println("penalties=$penalties")
         println("remainingLines=$remainingLines")
         println("questionBuilder=$questionBuilder")
@@ -300,57 +289,27 @@ class Keychenga : JFrame("Keychenga") {
         questionLines: List<String>,
         question: String,
     ) {
-        if (Thread.currentThread().isInterrupted) {
-            println("Answer method interrupted before starting.")
-            return
-        }
         val color = Color.BLACK
         questionLabel.setForeground(color)
         val answerBuilder = StringBuilder()
         val aimBuilder = StringBuilder()
         println("penalties=$penalties")
         println("question=[$question]")
-         println("questionLines=[$questionLines]")
-         println("questionLength=" + question.length)
+        println("questionLines=[$questionLines]")
+        println("questionLength=" + question.length)
 
-        try {
-            SwingUtilities.invokeAndWait {
-                if (Thread.currentThread().isInterrupted) return@invokeAndWait
-                questionLabel.text = question
-                answerLabel.text = ""
-                aimLabel.text = " ^"
-            }
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-            println("Interrupted during UI update in answer()")
-            return
-        } catch (e: Exception) {
-            if (!Thread.currentThread().isInterrupted) e.printStackTrace()
-            return
+        SwingUtilities.invokeAndWait {
+            questionLabel.text = question
+            answerLabel.text = ""
+            aimLabel.text = " ^"
         }
 
         println()
         for (questionLine in questionLines) {
-            if (Thread.currentThread().isInterrupted) {
-                println("Answer method interrupted during questionLine loop.")
-                return
-            }
             var questionLineWithLeadingSpace = " $questionLine"
 
             while (questionLineWithLeadingSpace.isNotEmpty()) {
-                if (Thread.currentThread().isInterrupted) {
-                    println("Answer method interrupted during inner while loop.")
-                    return
-                }
-                val key = inputQueue.poll(60, TimeUnit.SECONDS)
-                if (key == null) { // Timeout or interrupted
-                    if (Thread.currentThread().isInterrupted) {
-                        println("Input queue poll interrupted.")
-                        return
-                    }
-                    continue // Timeout, try again
-                }
-
+                val key = inputQueue.poll(60, TimeUnit.SECONDS) ?: continue
                 var answer = key.keyChar + ""
                 if (!key.keyChar.isDefined()
                     || key.isActionKey
@@ -401,8 +360,6 @@ class Keychenga : JFrame("Keychenga") {
         key: KeyEvent,
         questionLine: String,
     ): String {
-        if (Thread.currentThread().isInterrupted) return questionLineWithLeadingSpace // Early exit if interrupted
-
         var varQuestionLineWithLeadingSpace = questionLineWithLeadingSpace
         var varAnswer = answer
         if (varQuestionLineWithLeadingSpace.startsWith(" ")
@@ -415,7 +372,6 @@ class Keychenga : JFrame("Keychenga") {
             aimBuilder.append(" ".repeat(varAnswer.length))
             answerBuilder.append(varAnswer)
             SwingUtilities.invokeLater {
-                if (Thread.currentThread().isInterrupted) return@invokeLater
                 answerLabel.foreground = Color.BLACK
                 answerLabel.text = answerBuilder.toString()
                 if (varQuestionLineWithLeadingSpace.isEmpty()
@@ -433,7 +389,6 @@ class Keychenga : JFrame("Keychenga") {
                     repeat(times) { penalties.add(questionLine) }
                 }
                 SwingUtilities.invokeLater {
-                    if (Thread.currentThread().isInterrupted) return@invokeLater
                     answerLabel.foreground = Color.RED
                     answerLabel.text = answerBuilder.toString() + varAnswer
                 }
@@ -443,7 +398,6 @@ class Keychenga : JFrame("Keychenga") {
     }
 
     private fun matches(questionLineWithSpace: String, answer: String): Boolean {
-        if (Thread.currentThread().isInterrupted) return false
         val trim = answer.trim()
         if (trim == "F1") { // To avoid F1 passing for F10-F12
             val split = questionLineWithSpace.trim().split(" ")
@@ -473,21 +427,22 @@ class Keychenga : JFrame("Keychenga") {
 
             val isSelected = prefsNode.getBoolean(preferenceKey, false)
             val checkBox = JCheckBox(displayName, isSelected)
+            checkBox.isFocusable = false
 
-            checkBox.addItemListener { e ->
-                val currentCheckBox = e.source as JCheckBox
+            checkBox.addItemListener { event ->
+                val currentCheckBox = event.source as JCheckBox
                 val selected = currentCheckBox.isSelected
                 prefsNode.putBoolean(preferenceKey, selected)
                 try {
                     prefsNode.flush() // Ensure preferences are written to persistent storage
-                } catch (ex: java.util.prefs.BackingStoreException) {
-                    System.err.println("Error saving preferences: " + ex.message)
-                    ex.printStackTrace()
+                } catch (e: java.util.prefs.BackingStoreException) {
+                    System.err.println("Error saving preferences, error=$e")
+                    e.printStackTrace()
                 }
 
-                 if (e.stateChange == ItemEvent.SELECTED || e.stateChange == ItemEvent.DESELECTED) {
-                     startGame()
-                 }
+                if (event.stateChange == ItemEvent.SELECTED || event.stateChange == ItemEvent.DESELECTED) {
+                    startGame()
+                }
             }
             drillFilesCheckboxes[filePath] = checkBox // Store with full path for loading
             drillSelectionPanel.add(checkBox)
@@ -507,7 +462,7 @@ class Keychenga : JFrame("Keychenga") {
         val typePanel = JPanel(BorderLayout())
         centerPanel.add(typePanel, BorderLayout.CENTER)
 
-        val chars = CharArray(QUESTION_LENGTH_LIMIT)
+        val chars = CharArray(QUESTION_LENGTH_LIMIT + 1)
         Arrays.fill(chars, ' ')
         val text = String(chars)
 
@@ -530,13 +485,37 @@ class Keychenga : JFrame("Keychenga") {
 
         initKeyboard()
         SwingUtilities.invokeLater {
-            startGame() // Start the game initially with default selections
+            startGame()
+        }
+    }
+
+    private fun initKeyboard() {
+        try {
+            val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+            manager.addKeyEventPostProcessor { event: KeyEvent ->
+                if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
+                    if (IS_WINDOWS
+                        && event.keyCode == KeyEvent.VK_F4
+                        && event.modifiersEx and KeyEvent.ALT_DOWN_MASK != 0
+                    ) {
+                        return@addKeyEventPostProcessor false
+                    }
+                    event.consume()
+                    // Offer to queue, don't block indefinitely if queue is full and game is stuck
+                    if (!inputQueue.offer(event, 100, TimeUnit.MILLISECONDS)) {
+                        println("Could not add key event to queue (timeout).")
+                    }
+                }
+                true
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     @Suppress("SameParameterValue")
     private fun loadLines(resource: String): List<String> {
-        if (Thread.currentThread().isInterrupted) return emptyList()
         val lines: MutableList<String> = ArrayList()
         try {
             // Check if the resource string already has a leading slash for getResourceAsStream
@@ -550,46 +529,9 @@ class Keychenga : JFrame("Keychenga") {
                 linesReader.forEachLine { lines.add(it) }
             }
         } catch (e: Exception) {
-            if (Thread.currentThread().isInterrupted) {
-                println("Interrupted during loadLines for $resource")
-                return emptyList()
-            }
-            System.err.println("Error loading lines from resource '$resource': ${e.message}")
+            System.err.println("Error loading lines from resource '$resource', error=$e}")
             e.printStackTrace()
         }
         return lines
     }
-
-    private fun initKeyboard() {
-        try {
-            val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-            manager.addKeyEventPostProcessor { event: KeyEvent ->
-                if (Thread.currentThread().isInterrupted &&
-                    (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED)) {
-                    // If the game thread is interrupted, don't process new input for it.
-                    // This prevents adding to inputQueue if the consumer thread is stopping.
-                    return@addKeyEventPostProcessor true // Mark as processed
-                }
-                if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_TYPED) {
-                    if (IS_WINDOWS
-                        && event.keyCode == KeyEvent.VK_F4
-                        && event.modifiersEx and KeyEvent.ALT_DOWN_MASK != 0
-                    ) {
-                        return@addKeyEventPostProcessor false
-                    }
-                    event.consume()
-                    // Offer to queue, don't block indefinitely if queue is full and game is stuck
-                    if (!inputQueue.offer(event, 100, TimeUnit.MILLISECONDS)) {
-                         println("Could not add key event to queue (timeout).")
-                    }
-                }
-                true
-            }
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-
 }
