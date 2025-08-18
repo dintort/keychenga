@@ -20,7 +20,6 @@ import java.util.zip.ZipInputStream
 import javax.swing.BorderFactory
 import javax.swing.BoxLayout
 import javax.swing.ImageIcon
-import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -29,7 +28,6 @@ import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 import kotlin.random.Random
 
-// ... (Constants and IS_WINDOWS remain the same)
 const val QUESTION_LENGTH_LIMIT = 75
 private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
 //    "⌘" to "Windows",
@@ -60,7 +58,6 @@ class Keychenga : JFrame("Keychenga") {
 
     private val drillFilesCheckboxes = mutableMapOf<String, JCheckBox>()
     private var availableDrillFiles = listOf<String>()
-    private val startButton: JButton
     private var gameExecutor = Executors.newSingleThreadExecutor()
 
     private fun startGame() {
@@ -86,7 +83,7 @@ class Keychenga : JFrame("Keychenga") {
             val selectedLines = loadSelectedDrillLines()
             if (selectedLines.isEmpty()) {
                 SwingUtilities.invokeLater {
-                    questionLabel.text = "Please select at least one drill file."
+                    questionLabel.text = " Please select at least one drill file."
                     answerLabel.text = ""
                     aimLabel.text = ""
                 }
@@ -96,7 +93,7 @@ class Keychenga : JFrame("Keychenga") {
             selectedLines.shuffle()
             println("lines=$selectedLines")
             question(selectedLines)
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             Thread.currentThread().interrupt() // Restore interruption status
             println("Game interrupted.")
         } catch (e: Exception) {
@@ -126,8 +123,7 @@ class Keychenga : JFrame("Keychenga") {
     private fun discoverDrillFiles(): List<String> {
         val discoveredFiles = mutableListOf<String>()
         val drillsPath = "/drills/"
-        val classLoader = this.javaClass.classLoader
-        val folderUrl = classLoader.getResource(drillsPath)
+        val folderUrl = this.javaClass.getResource(drillsPath)
 
         if (folderUrl == null) {
             System.err.println("Drills folder not found: $drillsPath")
@@ -160,10 +156,10 @@ class Keychenga : JFrame("Keychenga") {
                     }
             } catch (e: Exception) {
                 e.printStackTrace()
-                System.err.println("Error discovering drills from file system: ${e.message}")
+                System.err.println("Error discovering drills from file system, error=${e}")
             }
         }
-        println("Discovered drills: $discoveredFiles")
+        println("Discovered drills=$discoveredFiles")
         return discoveredFiles.sorted()
     }
 
@@ -319,7 +315,7 @@ class Keychenga : JFrame("Keychenga") {
                 answerLabel.text = ""
                 aimLabel.text = " ^"
             }
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
             println("Interrupted during UI update in answer()")
             return
@@ -457,18 +453,18 @@ class Keychenga : JFrame("Keychenga") {
     init {
         defaultCloseOperation = EXIT_ON_CLOSE
         val font = Font(Font.MONOSPACED, Font.BOLD, 20)
-        val mainPanel = JPanel(BorderLayout(10, 10)) // Add some spacing
+        val mainPanel = JPanel(BorderLayout())
         contentPane.add(mainPanel)
 
         val drillSelectionPanel = JPanel()
         drillSelectionPanel.layout = BoxLayout(drillSelectionPanel, BoxLayout.Y_AXIS)
-        drillSelectionPanel.border = BorderFactory.createTitledBorder("Select Drills")
+        drillSelectionPanel.border = BorderFactory.createTitledBorder("Drills")
 
         availableDrillFiles = discoverDrillFiles()
         availableDrillFiles.forEach { filePath ->
             // Extract a display name (e.g., "f-keys.txt" from "drills/f-keys.txt")
             val displayName = filePath.substring(filePath.lastIndexOf('/') + 1)
-            val checkBox = JCheckBox(displayName, true) // Select by default
+            val checkBox = JCheckBox(displayName, false)
             checkBox.addItemListener { e ->
                  if (e.stateChange == ItemEvent.SELECTED || e.stateChange == ItemEvent.DESELECTED) {
                      startGame()
@@ -479,7 +475,7 @@ class Keychenga : JFrame("Keychenga") {
         }
 
         val drillScrollPane = JScrollPane(drillSelectionPanel)
-        drillScrollPane.preferredSize = java.awt.Dimension(200, 0) // Width, height will adjust
+        drillScrollPane.border = null
         mainPanel.add(drillScrollPane, BorderLayout.WEST)
 
         // --- Center Panel (Image and Typing Area) ---
@@ -508,16 +504,6 @@ class Keychenga : JFrame("Keychenga") {
         aimLabel.font = font
         aimLabel.setForeground(Color.BLUE)
         typePanel.add(aimLabel, BorderLayout.SOUTH)
-
-        // --- Start Button (SOUTH of Center Panel or Main Panel) ---
-        startButton = JButton("Start Game")
-        startButton.font = Font(Font.SANS_SERIF, Font.BOLD, 16)
-        startButton.addActionListener { startGame() }
-        // Adding to the bottom of the center panel:
-        typePanel.add(startButton, BorderLayout.SOUTH)
-        // Or, if you want it at the very bottom of the window:
-        // mainPanel.add(startButton, BorderLayout.SOUTH)
-
 
         pack()
         val screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
