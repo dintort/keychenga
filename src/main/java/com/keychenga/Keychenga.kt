@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.prefs.Preferences
 import java.util.zip.ZipInputStream
 import javax.swing.BorderFactory
 import javax.swing.BoxLayout
@@ -29,6 +30,8 @@ import javax.swing.SwingUtilities
 import kotlin.random.Random
 
 const val QUESTION_LENGTH_LIMIT = 75
+const val PREF_KEY_DRILL_SELECTED_PREFIX = "drill_selected_"
+
 private val MAC_TO_PC_KEYS: Map<String, String> = mapOf(
 //    "⌘" to "Windows",
     "⌘" to "Ctrl",
@@ -49,6 +52,8 @@ fun main() {
 }
 
 class Keychenga : JFrame("Keychenga") {
+    private val prefsNode = Preferences.userNodeForPackage(Keychenga::class.java)
+
     private val questionLabel: JLabel
     private val answerLabel: JLabel
     private val aimLabel: JLabel
@@ -464,8 +469,22 @@ class Keychenga : JFrame("Keychenga") {
         availableDrillFiles.forEach { filePath ->
             // Extract a display name (e.g., "f-keys.txt" from "drills/f-keys.txt")
             val displayName = filePath.substring(filePath.lastIndexOf('/') + 1)
-            val checkBox = JCheckBox(displayName, false)
+            val preferenceKey = PREF_KEY_DRILL_SELECTED_PREFIX + filePath.replace("/", "_") // Create a valid pref key
+
+            val isSelected = prefsNode.getBoolean(preferenceKey, false)
+            val checkBox = JCheckBox(displayName, isSelected)
+
             checkBox.addItemListener { e ->
+                val currentCheckBox = e.source as JCheckBox
+                val selected = currentCheckBox.isSelected
+                prefsNode.putBoolean(preferenceKey, selected)
+                try {
+                    prefsNode.flush() // Ensure preferences are written to persistent storage
+                } catch (ex: java.util.prefs.BackingStoreException) {
+                    System.err.println("Error saving preferences: " + ex.message)
+                    ex.printStackTrace()
+                }
+
                  if (e.stateChange == ItemEvent.SELECTED || e.stateChange == ItemEvent.DESELECTED) {
                      startGame()
                  }
