@@ -451,7 +451,7 @@ class Keychenga : JFrame("Keychenga") {
 
         val drillScrollPane = JScrollPane(drillSelectionPanel)
         drillScrollPane.border = null
-        mainPanel.add(drillScrollPane, BorderLayout.WEST)
+        mainPanel.add(drillScrollPane, BorderLayout.EAST)
 
         // --- Center Panel (Image and Typing Area) ---
         val centerPanel = JPanel(BorderLayout())
