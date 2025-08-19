@@ -222,7 +222,7 @@ class Keychenga : JFrame("Keychenga") {
         return if (remainingLines.isEmpty()) {
             ""
         } else if (penalties.isNotEmpty()
-            && Random.nextDouble() < 0.5
+            && Random.nextDouble() < 0.8
         ) {
             nextNotClashing(penalties, originalLines, questionBuilder)
         } else {
