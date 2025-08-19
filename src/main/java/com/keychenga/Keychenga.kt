@@ -62,7 +62,7 @@ class Keychenga : JFrame("Keychenga") {
     private val inputQueue: BlockingQueue<KeyEvent> = LinkedBlockingQueue()
     private val penalties = LimitedLinkedList<String>(1024)
 
-    private val drillFilesCheckboxes = mutableMapOf<String, JCheckBox>()
+    private val drillCheckboxByFullPath = mutableMapOf<String, JCheckBox>()
     private var availableDrillFiles = listOf<String>()
     private var gameExecutor = Executors.newSingleThreadExecutor()
 
@@ -116,7 +116,7 @@ class Keychenga : JFrame("Keychenga") {
 
     private fun loadSelectedDrillLines(): MutableList<String> {
         val selectedLines = mutableListOf<String>()
-        drillFilesCheckboxes.forEach { (drillName, checkBox) ->
+        drillCheckboxByFullPath.forEach { (drillName, checkBox) ->
             if (checkBox.isSelected) {
                 println("Loading selected drill file: /$drillName")
                 selectedLines.addAll(loadLines("/$drillName"))
@@ -205,7 +205,7 @@ class Keychenga : JFrame("Keychenga") {
                 }
                 if (lines.isEmpty() && remainingLines.isEmpty()) break // Avoid infinite loop if no lines at all
             }
-            if (questionLines.isNotEmpty()) { // Check again as lines might be empty
+            if (questionLines.isNotEmpty()) {
                 answer(questionLines, questionBuilder.toString())
             }
         }
@@ -422,9 +422,13 @@ class Keychenga : JFrame("Keychenga") {
 
         availableDrillFiles = discoverDrillFiles()
         availableDrillFiles.forEach { filePath ->
-            // Extract a display name (e.g., "f-keys.txt" from "drills/f-keys.txt")
-            val displayName = filePath.substring(filePath.lastIndexOf('/') + 1)
-            val preferenceKey = PREFERENCES_KEY_DRILL_SELECTED_PREFIX + filePath.replace("/", "_") // Create a valid pref key
+            // Extract a display name (e.g., "f-keys" from "drills/f-keys.txt")
+            val displayName = filePath.substring(
+                filePath.lastIndexOf('/') + 1,
+                filePath.lastIndexOf('.')
+            )
+            val preferenceKey = PREFERENCES_KEY_DRILL_SELECTED_PREFIX +
+                    filePath.replace("/", "_")
 
             val isSelected = preferences.getBoolean(preferenceKey, false)
             val checkBox = JCheckBox(displayName, isSelected)
@@ -435,7 +439,7 @@ class Keychenga : JFrame("Keychenga") {
                 val selected = currentCheckBox.isSelected
                 preferences.putBoolean(preferenceKey, selected)
                 try {
-                    preferences.flush() // Ensure preferences are written to persistent storage
+                    preferences.flush()
                 } catch (e: BackingStoreException) {
                     System.err.println("Error saving preferences, error=$e")
                     e.printStackTrace()
@@ -445,7 +449,7 @@ class Keychenga : JFrame("Keychenga") {
                     startGame()
                 }
             }
-            drillFilesCheckboxes[filePath] = checkBox // Store with full path for loading
+            drillCheckboxByFullPath[filePath] = checkBox
             drillSelectionPanel.add(checkBox)
         }
 
@@ -515,7 +519,6 @@ class Keychenga : JFrame("Keychenga") {
         }
     }
 
-    @Suppress("SameParameterValue")
     private fun loadLines(resource: String): List<String> {
         val lines: MutableList<String> = ArrayList()
         try {
