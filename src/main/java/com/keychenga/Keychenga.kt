@@ -142,7 +142,7 @@ class Keychenga : JFrame("Keychenga") {
                 ZipInputStream(FileInputStream(jarPath)).use { zis ->
                     var entry = zis.nextEntry
                     while (entry != null) {
-                        if (!entry.isDirectory && entry.name.startsWith(drillsPath.drop(1)) && entry.name.endsWith(".txt")) {
+                        if (!entry.isDirectory && entry.name.startsWith(drillsPath.drop(1))) {
                             discoveredFiles.add(entry.name) // Store full path from JAR root
                         }
                         entry = zis.nextEntry
@@ -155,7 +155,7 @@ class Keychenga : JFrame("Keychenga") {
         } else {
             try {
                 val folder = java.io.File(folderUrl.toURI())
-                folder.listFiles { file -> file.isFile && file.name.endsWith(".txt") }
+                folder.listFiles { file -> file.isFile }
                     ?.forEach { file ->
                         discoveredFiles.add(drillsPath.drop(1) + file.name) // Store path relative to resources
                     }
@@ -425,7 +425,7 @@ class Keychenga : JFrame("Keychenga") {
             // Extract a display name (e.g., "f-keys" from "drills/f-keys.txt")
             val displayName = filePath.substring(
                 filePath.lastIndexOf('/') + 1,
-                filePath.lastIndexOf('.')
+                filePath.lastIndexOf('.').takeIf { it != -1 } ?: filePath.length
             )
             val preferenceKey = PREFERENCES_KEY_DRILL_SELECTED_PREFIX +
                     filePath.replace("/", "_")
