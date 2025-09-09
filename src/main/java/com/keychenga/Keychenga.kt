@@ -333,6 +333,12 @@ class Keychenga : JFrame("Keychenga") {
                 if (key.keyChar == '\n' || key.keyChar == ' ') {
                     answer = " "
                 }
+                //Hack for the pipe that is hacked with BetterTouchTool
+                if (answer == "Unknown keyCode: 0x0"
+                    && key.modifiersEx and KeyEvent.ALT_DOWN_MASK != 0
+                    && key.modifiersEx and KeyEvent.META_DOWN_MASK != 0) {
+                    answer = "|"
+                }
                 if (answer.startsWith("Unknown")
                     || answer.startsWith("Undefined")
                 ) {
@@ -384,7 +390,7 @@ class Keychenga : JFrame("Keychenga") {
                 }
             }
         } else {
-            if (key.keyChar.isDefined() || key.isActionKey) {
+            if (key.keyChar.isDefined() || key.isActionKey || answer == "|") {
                 if (varAnswer != " ") {
                     val times = if (questionLine.length <= 3) 32 else 8
                     repeat(times) { penalties.add(questionLine) }
